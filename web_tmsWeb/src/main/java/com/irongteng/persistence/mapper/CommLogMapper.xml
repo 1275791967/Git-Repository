@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.CommLogMapper">
+
+	<resultMap id="commLogResult" type="CommLog">
+		<result property="id" jdbcType="INTEGER" column="ID" />
+		<result property="logTypeID" jdbcType="INTEGER" column="LogTypeID" />
+		<result property="content" jdbcType="VARCHAR" column="Content" />
+		<result property="recordTime" jdbcType="TIMESTAMP" column="RecordTime" />
+		<result property="remark" jdbcType="VARCHAR" column="Remark" />
+		<association property="device" javaType="Device"
+			column="DeviceID" resultMap="deviceResult" />
+	</resultMap>
+
+	<resultMap id="deviceResult" type="Device">
+		<result property="id" jdbcType="INTEGER" column="DeviceID" />
+		<result property="customerID" jdbcType="INTEGER" column="CustomerID" />
+		<result property="deviceName" jdbcType="VARCHAR" column="DeviceName" />
+		<result property="deviceIP" jdbcType="VARCHAR" column="DeviceIP" />
+		<result property="deviceType" jdbcType="INTEGER" column="DeviceType" />
+		<result property="featureCode" jdbcType="VARCHAR" column="FeatureCode" />
+		<result property="address" jdbcType="VARCHAR" column="Address" />
+		<result property="areaLocation" jdbcType="VARCHAR" column="AreaLocation" />
+		<result property="longitude" jdbcType="VARCHAR" column="Longitude" />
+		<result property="latitude" jdbcType="VARCHAR" column="Latitude" />
+		<result property="createTime" jdbcType="TIMESTAMP" column="CreateTime" />
+		<result property="remark" jdbcType="VARCHAR" column="Remark" />
+	</resultMap>
+
+	<sql id="Insert_Column_List">
+		deviceID, logTypeID, content, recordTime,remark
+	</sql>
+
+	<sql id="Base_Column_List">
+		td.id,
+		dd.deviceName,
+		td.deviceID,
+		td.logTypeID,
+		td.content,
+		td.recordTime,
+		td.remark,
+		dd.id as DeviceID,
+		dd.customerID,
+		dd.deviceIP,
+		dd.areaLocation,
+		dd.deviceType,
+		dd.featureCode,
+		dd.address,
+		dd.longitude,
+		dd.latitude,
+		dd.createTime
+	</sql>
+
+	<sql id="Base_Table_List">
+		t_log td
+		inner join t_device dd on td.deviceID = dd.ID
+	</sql>
+
+	<sql id="Base_Query_List">
+		SELECT
+		<include refid="Base_Column_List" />
+		FROM
+		<include refid="Base_Table_List" />
+	</sql>
+
+	<sql id="Base_Count_List">
+		select count(0) as c from
+		<include refid="Base_Table_List" />
+	</sql>
+
+	<sql id="Base_Order_By">
+		order by td.id
+	</sql>
+
+	<sql id="Base_Page_Condition">
+		<choose>
+			<when test="orderField !=null and orderField !=''">
+				ORDER BY ${orderField}
+				<if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+			</when>
+			<otherwise>
+				<include refid="Base_Order_By" />
+			</otherwise>
+		</choose>
+	</sql>
+
+	<select id="load" parameterType="Integer" resultMap="commLogResult">
+		<include refid="Base_Query_List" />
+		WHERE td.ID = #{id}
+	</select>
+
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id"
+		parameterType="CommLog">
+		INSERT INTO t_log (
+		<include refid="Insert_Column_List" />
+		) VALUES (
+		#{deviceID},
+		#{logTypeID},
+		#{content},
+		#{recordTime},
+		#{remark}
+		)
+	</insert>
+
+	<update id="update" parameterType="CommLog">
+		UPDATE t_log
+		SET
+		DeviceID = #{deviceID},
+		LogTypeID = #{logTypeID},
+		Content = #{content},
+		RecordTime = #{recordTime},
+		Remark = #{remark}
+		WHERE
+		ID = #{id}
+	</update>
+
+	<update id="updateSelective" parameterType="CommLog">
+		UPDATE t_log
+		<set>
+			<if test="deviceID !=null">
+				DeviceID = #{deviceID},
+			</if>
+			<if test="logTypeID !=null">
+				LogTypeID = #{logTypeID},
+			</if>
+			<if test="content !=null">
+				Content = #{content},
+			</if>
+			<if test="recordTime !=null">
+				RecordTime = #{recordTime},
+			</if>
+			<if test="remark !=null">
+				Remark = #{remark}
+			</if>
+		</set>
+		WHERE
+		ID = #{id}
+	</update>
+
+	<!-- 批量插入 -->
+	<insert id="insertBatch" parameterType="java.util.List">
+		INSERT INTO t_log (
+		<include refid="Insert_Column_List" />
+		) VALUES
+		<foreach item="item" index="index" collection="list"
+			separator=",">
+			(
+			#{item.deviceID},
+			#{item.logTypeID},
+			#{item.content},
+			#{item.recordTime},
+			#{item.remark}
+			)
+		</foreach>
+	</insert>
+
+	<delete id="delete" parameterType="Integer">
+		DELETE FROM t_log where ID=#{id}
+	</delete>
+
+	<!-- 批量更新 -->
+	<update id="updateBatch" parameterType="java.util.List">
+		<foreach item="item" collection="list" index="index" open=""
+			close="" separator=";">
+			UPDATE t_log
+			SET
+			DeviceID = #{item.deviceID},
+			LogTypeID = #{item.logTypeID},
+			Content = #{item.content},
+			RecordTime = #{item.recordTime},
+			Remark = #{item.remark},
+			WHERE
+			ID = #{item.id}
+		</foreach>
+	</update>
+
+	<select id="findByCondition" resultMap="commLogResult"
+		parameterType="map">
+		<include refid="Base_Query_List" />
+		<include refid="Base_Where_Condition" />
+		<include refid="Base_Page_Condition" />
+	</select>
+
+	<select id="findPageBreakByCondition" resultMap="commLogResult"
+		parameterType="map">
+		<include refid="Base_Query_List" />
+		<include refid="Base_Where_Condition" />
+		<include refid="Base_Page_Condition" />
+	</select>
+
+	<select id="findNumberByCondition" resultType="Integer"
+		parameterType="map">
+		<include refid="Base_Count_List" />
+		<include refid="Base_Where_Condition" />
+	</select>
+
+	<select id="countAll" resultType="Integer">
+		SELECT count(0) as c FROM t_log
+	</select>
+
+	<sql id="Base_Where_Condition">
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+			<if test="deviceID != null">
+				AND td.DeviceID = #{deviceID}
+			</if>
+			<if test="deviceName != null">
+				AND dd.DeviceName = #{deviceName}
+			</if>
+			<if test="logTypeID != null">
+				AND td.LogTypeID = #{logTypeID}
+			</if>
+			<if test="content != null">
+				AND td.Content = #{content}
+			</if>
+			<if test="startDate != null">
+				AND td.RecordTime &gt;= #{startDate}
+			</if>
+			<if test="endDate != null">
+				AND td.RecordTime &lt;= #{endDate}
+			</if>
+			<if test="remark != null">
+				AND td.Remark = #{remark}
+			</if>
+			<if test="customerID != null">
+				AND dd.CustomerID = #{customerID}
+			</if>
+			<if test="deviceIP != null">
+				AND dd.DeviceIP = #{deviceIP}
+			</if>
+			<if test="areaLocation != null">
+				AND dd.AreaLocation = #{areaLocation}
+			</if>
+			<if test="deviceType != null">
+				AND dd.DeviceType = #{deviceType}
+			</if>
+			<if test="featureCode != null">
+				AND dd.FeatureCode = #{featureCode}
+			</if>
+			<if test="address != null">
+				AND dd.Address = #{address}
+			</if>
+			<if test="longitude != null">
+				AND dd.Longitude = #{longitude}
+			</if>
+		</trim>
+	</sql>
+
+	<!-- 批量删除 -->
+	<delete id="deleteBatch" parameterType="java.util.List">
+		DELETE FROM t_log WHERE
+		ID in
+		<foreach collection="list" item="item" open="(" separator=","
+			close=")">
+			#{item}
+		</foreach>
+	</delete>
+
+</mapper>

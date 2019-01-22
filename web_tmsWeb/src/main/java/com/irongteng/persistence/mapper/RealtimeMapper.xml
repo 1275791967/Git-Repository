@@ -1,0 +1,639 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.RealtimeMapper">
+    
+    <cache />
+    
+    <resultMap id="realtimeResult" type="Realtime">
+        <id property="id" jdbcType="INTEGER" column="DeviceID" />
+        <result property="deviceName" jdbcType="VARCHAR" column="DeviceName" />
+        <result property="siteID" jdbcType="INTEGER" column="SitID" />
+        <result property="siteName" jdbcType="VARCHAR" column="SiteName" />
+        
+        <result property="mac" jdbcType="VARCHAR" column="MAC" />
+        <result property="ssid" jdbcType="VARCHAR" column="SSID" />
+        <result property="imei" jdbcType="VARCHAR" column="IMEI" />
+        <result property="imsi" jdbcType="VARCHAR" column="IMSI" />
+         
+        <result property="totalMAC" jdbcType="INTEGER" column="Total_MAC" />
+        <result property="distinctMAC" jdbcType="INTEGER" column="Distinct_MAC" />
+        <result property="totalSSID" jdbcType="INTEGER" column="Total_SSID" />
+        <result property="distinctSSID" jdbcType="INTEGER" column="Distinct_SSID" />
+        <result property="totalIMEI" jdbcType="INTEGER" column="Total_IMEI" />
+        <result property="distinctIMEI" jdbcType="INTEGER" column="Distinct_IMEI" />
+        <result property="totalIMSI" jdbcType="INTEGER" column="Total_IMSI" />
+        <result property="distinctIMSI" jdbcType="INTEGER" column="Distinct_IMSI" />
+    </resultMap>
+    
+    <resultMap id="realtimeSiteResult" type="RealtimeSite">
+        <id property="id" jdbcType="INTEGER" column="SiteID" />
+        <result property="siteName" jdbcType="VARCHAR" column="SiteName" />
+        <!--
+        <result property="mac" jdbcType="VARCHAR" column="MAC" />
+        <result property="ssid" jdbcType="VARCHAR" column="SSID" />
+        <result property="imei" jdbcType="VARCHAR" column="IMEI" />
+        <result property="imsi" jdbcType="VARCHAR" column="IMSI" />
+        -->
+        <result property="totalMAC" jdbcType="INTEGER" column="Total_MAC" />
+        <result property="distinctMAC" jdbcType="INTEGER" column="Distinct_MAC" />
+        <result property="totalSSID" jdbcType="INTEGER" column="Total_SSID" />
+        <result property="distinctSSID" jdbcType="INTEGER" column="Distinct_SSID" />
+        <result property="totalIMEI" jdbcType="INTEGER" column="Total_IMEI" />
+        <result property="distinctIMEI" jdbcType="INTEGER" column="Distinct_IMEI" />
+        <result property="totalIMSI" jdbcType="INTEGER" column="Total_IMSI" />
+        <result property="distinctIMSI" jdbcType="INTEGER" column="Distinct_IMSI" />
+    </resultMap>
+    
+    <resultMap id="realtimeTotalResult" type="RealtimeTotal">
+        <id property="id" jdbcType="INTEGER" column="ID" />
+        <result property="deviceName" jdbcType="VARCHAR" column="DeviceName" />
+        <result property="content" jdbcType="VARCHAR" column="Content" />
+        <result property="recordTime" jdbcType="TIMESTAMP" column="RecordTime" />
+    </resultMap>
+    
+     <resultMap id="realtimeDistinctResult" type="RealtimeDistinct">
+        <id property="id" jdbcType="INTEGER" column="ID" />
+        
+        <result property="deviceName" jdbcType="VARCHAR" column="DeviceName" />
+        <result property="content" jdbcType="VARCHAR" column="Content" />
+        <result property="startTime" jdbcType="TIMESTAMP" column="StartTime" />
+        <result property="endTime" jdbcType="TIMESTAMP" column="EndTime" />
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        d.ID as DeviceID, d.DeviceName, d.SiteID, s.SiteName,
+        ifnull(Total_MAC, 0) as Total_MAC,   ifnull(Distinct_MAC, 0) as Distinct_MAC,   ifnull(Total_SSID, 0) as Total_SSID , ifnull(Distinct_SSID, 0) as Distinct_SSID, 
+        ifnull(Total_IMEI, 0) as Total_IMEI, ifnull(Distinct_IMEI, 0) as Distinct_IMEI, ifnull(Total_IMSI, 0) as Total_IMSI,  ifnull(Distinct_IMSI, 0) as Distinct_IMSI
+    </sql>
+    
+    <sql id="Base_Site_Column_List">
+        s.ID as SiteID,s .SiteName, 
+        ifnull(Total_MAC, 0) as Total_MAC,   ifnull(Distinct_MAC, 0) as Distinct_MAC,   ifnull(Total_SSID, 0) as Total_SSID , ifnull(Distinct_SSID, 0) as Distinct_SSID, 
+        ifnull(Total_IMEI, 0) as Total_IMEI, ifnull(Distinct_IMEI, 0) as Distinct_IMEI, ifnull(Total_IMSI, 0) as Total_IMSI,  ifnull(Distinct_IMSI, 0) as Distinct_IMSI
+    </sql>
+    <sql id="Visit_Log_Column_List">
+        DeviceID, count(User_MAC) as Total_MAC , count(distinct User_MAC) as Distinct_MAC, count(AP_MAC) as Total_SSID , count(distinct AP_MAC) as Distinct_SSID, 
+        0 as Total_IMEI,0 as Distinct_IMEI, 0 as Total_IMSI,0 as Distinct_IMSI
+    </sql>
+    <sql id="Hpl_Log_Column_List">
+        DeviceID, 0 as Total_MAC , 0 as Distinct_MAC, 0 as Total_SSID , 0 as Distinct_SSID, 
+        count(User_IMEI) as Total_IMEI, count(distinct User_IMEI) as Distinct_IMEI, count(User_IMSI) as Total_IMSI , count(distinct User_IMSI) as Distinct_IMSI 
+    </sql>
+    
+    <sql id="Site_Log_Column_List">
+        SiteID, sum(Total_MAC) as Total_MAC, sum(Distinct_MAC) as Distinct_MAC, sum(Total_SSID) as Total_SSID, sum(Distinct_SSID) as Distinct_SSID, 
+        sum(Total_IMEI) as Total_IMEI, sum(Distinct_IMEI) as Distinct_IMEI, sum(Total_IMSI) as Total_IMSI , sum(Distinct_IMSI) as Distinct_IMSI
+    </sql>
+    <select id="findPageBreakByCondition" parameterType="map" resultMap="realtimeResult">
+        select
+            <include refid="Base_Column_List" />
+        from device d 
+            inner join t_site s on s.ID=d.SiteID
+            left join (
+            select 
+            <include refid="Hpl_Log_Column_List" />
+            from hpl_log
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <if test="startDate != null">
+                    AND RecordTime &gt;= #{startDate} 
+                </if>
+                <if test="endDate != null">
+                    AND RecordTime &lt;= #{endDate} 
+                </if>
+                <if test="deviceID != null">
+                    AND DeviceID in (#{deviceID})  
+                </if>
+            </trim>
+            group by DeviceID
+            <if test="type == null or (type!=null and type == 1)">
+                union all
+                select 
+                <include refid="Visit_Log_Column_List" />
+                from visit_log
+                <trim prefix="WHERE" prefixOverrides="AND|OR">
+                    <if test="startDate != null">
+                        AND StartTime &gt;= #{startDate} 
+                    </if>
+                    <if test="endDate != null">
+                        AND StartTime &lt;= #{endDate} 
+                    </if>
+                    <if test="deviceID != null">
+                        AND DeviceID in (#{deviceID})  
+                    </if>
+                </trim>
+                group by DeviceID
+            </if>
+            ) b on b.DeviceID = d.ID
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="siteID != null">
+                AND s.ID in (#{siteID}) 
+            </if>
+            <if test="deviceID != null">
+                AND d.ID in (#{deviceID}) 
+            </if>
+            <if test="keywords != null">
+                AND (
+                s.SiteName LIKE "%"#{keywords}"%"
+                or d.DeviceName LIKE "%"#{keywords}"%"
+                )
+            </if>
+        </trim>
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                order by Total_IMSI desc, Total_MAC desc
+            </otherwise>
+        </choose>
+        
+    </select>
+    
+    <!-- 查询符合条件总条数 -->
+    <select id="findNumberByCondition" resultType="Integer" parameterType="map">
+        select count(distinct d.ID) as num 
+        from device d
+            inner join t_site s on s.ID=d.SiteID
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="type!=null and type != 1">
+                and d.CategoryID=1
+            </if>
+            <if test="siteID != null">
+                AND s.ID in (#{siteID}) 
+            </if>
+            <if test="deviceID != null">
+                AND d.ID in (#{deviceID}) 
+            </if>
+            <if test="keywords != null">
+                AND (
+                s.SiteName LIKE "%"#{keywords}"%"
+                or d.DeviceName LIKE "%"#{keywords}"%"
+                )
+            </if>
+        </trim>
+    </select>
+    
+    <select id="findSitePageBreakByCondition" parameterType="map" resultMap="realtimeSiteResult">
+        select
+            <include refid="Base_Site_Column_List" />
+        from t_site s
+        left join (
+            select 
+            <include refid="Site_Log_Column_List" />
+            from device d 
+                inner join (
+                    select 
+                        <include refid="Hpl_Log_Column_List" />
+                    from hpl_log
+                    <trim prefix="WHERE" prefixOverrides="AND|OR">
+                        <if test="startDate != null">
+                            AND RecordTime &gt;= #{startDate} 
+                        </if>
+                        <if test="endDate != null">
+                            AND RecordTime &lt;= #{endDate} 
+                        </if>
+                        <if test="siteID != null">
+                            AND DeviceID in (select DeviceID from device where SiteID in (#{siteID}))  
+                        </if>
+                    </trim>
+                    group by DeviceID
+                    <if test="type == null or (type!=null and type == 1)">
+                        union all
+                        select 
+                            <include refid="Visit_Log_Column_List" />
+                        from visit_log
+                        <trim prefix="WHERE" prefixOverrides="AND|OR">
+                            <if test="startDate != null">
+                                AND StartTime &gt;= #{startDate} 
+                            </if>
+                            <if test="endDate != null">
+                                AND StartTime &lt;= #{endDate} 
+                            </if>
+                            <if test="siteID != null">
+                                AND DeviceID in (select DeviceID from device where SiteID in (#{siteID}))  
+                            </if>
+                        </trim>
+                        group by DeviceID
+                    </if>
+                ) c on c.DeviceID = d.ID
+                <trim prefix="WHERE" prefixOverrides="AND|OR">
+                    <if test="type!=null and type != 1">
+                        and d.CategoryID=1
+                    </if>
+                </trim>
+                group by d.SiteID
+            ) b on b.SiteID = s.ID
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="siteID != null">
+                AND s.ID in (#{siteID}) 
+            </if>
+            <if test="keywords != null">
+                AND s.SiteName LIKE "%"#{keywords}"%"
+            </if>
+        </trim>
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                order by Total_IMSI desc, Total_MAC desc
+            </otherwise>
+        </choose>
+        
+    </select>
+    
+    <!-- 查询符合条件总条数 -->
+    <select id="findSiteNumberByCondition" resultType="Integer" parameterType="map">
+        select count(distinct s.ID) as num 
+        from t_site s
+            left join device d on s.ID=d.SiteID
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="type!=null and type != 1">
+                and d.CategoryID=1
+            </if>
+            <if test="siteID != null">
+                AND s.ID in (#{siteID}) 
+            </if>
+            <if test="keywords != null">
+                AND s.SiteName LIKE "%"#{keywords}"%"
+            </if>
+        </trim>
+    </select>
+    
+    <!-- 查询即时统计唯一MAC信息 -->
+    <select id="findDistinctMacPageBreakByCondition" parameterType="map" resultMap="realtimeResult">
+        select max(ID) as ID, User_MAC as Content , min(StartTime) as StartTime, max(StartTime) as EndTime
+        from visit_log 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="deviceID != null">
+                AND DeviceID in (#{deviceID})
+            </if>
+            <if test="startDate != null">
+                AND StartTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND StartTime &lt;= #{endDate} 
+            </if>
+        </trim>   
+        group by User_MAC
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                 ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                 order by EndTime DESC
+            </otherwise>
+        </choose>
+          
+    </select>
+    
+    <!-- 查询即时统计唯一MAC信息数量 -->
+    <select id="findDistinctMacNumberByCondition" resultType="Integer" parameterType="map">
+        select count(distinct User_MAC) a
+        from visit_log 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="deviceID != null">
+                AND DeviceID in (#{deviceID})
+            </if>
+            <if test="startDate != null">
+                AND StartTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND StartTime &lt;= #{endDate} 
+            </if>
+        </trim>    
+        
+    </select>
+    
+    <!-- 查询即时统计唯一SSID信息 -->
+    <select id="findDistinctSsidPageBreakByCondition" parameterType="map" resultMap="realtimeDistinctResult">
+        select max(ID) as ID, AP_MAC as Content , min(StartTime) as StartTime, max(StartTime) as EndTime
+        from visit_log 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="deviceID != null">
+                AND DeviceID in (#{deviceID})
+            </if>
+            <if test="startDate != null">
+                AND StartTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND StartTime &lt;= #{endDate} 
+            </if>
+        </trim>    
+        group by AP_MAC
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                 ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                 order by EndTime DESC
+            </otherwise>
+        </choose>
+          
+    </select>
+    
+    <!-- 查询即时统计唯一SSID信息数量 -->
+    <select id="findDistinctSsidNumberByCondition" resultType="Integer" parameterType="map">
+        select count(distinct AP_MAC) a
+        from visit_log 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="deviceID != null">
+                AND DeviceID in (#{deviceID})
+            </if>
+            <if test="startDate != null">
+                AND StartTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND StartTime &lt;= #{endDate} 
+            </if>
+        </trim>    
+    </select>
+    
+    <!-- 查询即时统计唯一IMEI信息 -->
+    <select id="findDistinctImeiPageBreakByCondition" parameterType="map" resultMap="realtimeDistinctResult">
+        select max(ID) as ID, User_IMEI as Content, min(RecordTime) as StartTime, max(RecordTime) as EndTime
+        from hpl_log 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="deviceID != null">
+                AND DeviceID in (#{deviceID})
+            </if>
+            <if test="startDate != null">
+                AND RecordTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND RecordTime &lt;= #{endDate} 
+            </if>
+        </trim>    
+        group by User_IMEI
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                 ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                 order by RecordTime DESC
+            </otherwise>
+        </choose>
+          
+    </select>
+    
+    <!-- 查询即时统计唯一IMEI信息数量 -->
+    <select id="findDistinctImeiNumberByCondition" resultType="Integer" parameterType="map">
+        select count(distinct User_IMEI) a
+        from hpl_log 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="deviceID != null">
+                AND DeviceID in (#{deviceID})
+            </if>
+            <if test="startDate != null">
+                AND RecordTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND RecordTime &lt;= #{endDate} 
+            </if>
+        </trim>    
+        
+    </select>
+    
+    <!-- 查询即时统计唯一IMS信息 -->
+    <select id="findDistinctImsiPageBreakByCondition" parameterType="map" resultMap="realtimeDistinctResult">
+        select max(ID) as ID, User_IMSI as Content, min(RecordTime) as StartTime, max(RecordTime) as EndTime
+        from hpl_log 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="deviceID != null">
+                AND DeviceID in (#{deviceID}) 
+            </if>
+            <if test="startDate != null">
+                AND RecordTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND RecordTime &lt;= #{endDate} 
+            </if>
+        </trim>    
+        group by User_IMSI
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                 ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                 order by RecordTime DESC
+            </otherwise>
+        </choose>
+          
+    </select>
+    
+    <!-- 查询I即时统计唯一IMS信息数量 -->
+    <select id="findDistinctImsiNumberByCondition" resultType="Integer" parameterType="map">
+        select count(distinct User_IMSI) a
+        from hpl_log 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="deviceID != null">
+                AND DeviceID in (#{deviceID})
+            </if>
+            <if test="startDate != null">
+                AND RecordTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND RecordTime &lt;= #{endDate} 
+            </if>
+        </trim>    
+    </select>
+    
+    <!-- 查询即时统计唯一MAC信息 -->
+    <select id="findTotalMacPageBreakByCondition" parameterType="map" resultMap="realtimeTotalResult">
+        select ID, User_MAC as Content, StartTime as RecordTime
+        from visit_log 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="deviceID != null">
+                AND DeviceID in (#{deviceID})
+            </if>
+            <if test="startDate != null">
+                AND StartTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND StartTime &lt;= #{endDate} 
+            </if>
+        </trim>    
+        
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                 ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                 order by StartTime DESC
+            </otherwise>
+        </choose>
+          
+    </select>
+    
+    <!-- 查询即时统计唯一MAC信息数量 -->
+    <select id="findTotalMacNumberByCondition" resultType="Integer" parameterType="map">
+        select count(User_MAC) a
+        from visit_log 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="deviceID != null">
+                AND DeviceID in (#{deviceID})
+            </if>
+            <if test="startDate != null">
+                AND StartTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND StartTime &lt;= #{endDate} 
+            </if>
+        </trim>    
+        
+    </select>
+    
+    <!-- 查询即时统计唯一SSID信息 -->
+    <select id="findTotalSsidPageBreakByCondition" parameterType="map" resultMap="realtimeTotalResult">
+        select ID, AP_MAC as Content, StartTime as RecordTime
+        from visit_log 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="deviceID != null">
+                AND DeviceID in (#{deviceID})
+            </if>
+            <if test="startDate != null">
+                AND StartTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND StartTime &lt;= #{endDate} 
+            </if>
+        </trim>    
+        
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                 ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                 order by StartTime DESC
+            </otherwise>
+        </choose>
+          
+    </select>
+    
+    <!-- 查询即时统计唯一SSID信息数量 -->
+    <select id="findTotalSsidNumberByCondition" resultType="Integer" parameterType="map">
+        select count(0) a
+        from visit_log 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="deviceID != null">
+                AND DeviceID in (#{deviceID})
+            </if>
+            <if test="startDate != null">
+                AND StartTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND StartTime &lt;= #{endDate} 
+            </if>
+        </trim>    
+    </select>
+    
+    <!-- 查询即时统计唯一IMEI信息 -->
+    <select id="findTotalImeiPageBreakByCondition" parameterType="map" resultMap="realtimeTotalResult">
+        select ID, User_IMEI as Content, RecordTime
+        from hpl_log 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="deviceID != null">
+                AND DeviceID in (#{deviceID})
+            </if>
+            <if test="startDate != null">
+                AND RecordTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND RecordTime &lt;= #{endDate} 
+            </if>
+        </trim>    
+        
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                 ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                 order by RecordTime DESC
+            </otherwise>
+        </choose>
+          
+    </select>
+    
+    <!-- 查询即时统计唯一IMEI信息数量 -->
+    <select id="findTotalImeiNumberByCondition" resultType="Integer" parameterType="map">
+        select count(User_IMEI) a
+        from hpl_log 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="deviceID != null">
+                AND DeviceID in (#{deviceID})
+            </if>
+            <if test="startDate != null">
+                AND RecordTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND RecordTime &lt;= #{endDate} 
+            </if>
+        </trim>    
+        
+    </select>
+    
+    <!-- 查询即时统计唯一IMS信息 -->
+    <select id="findTotalImsiPageBreakByCondition" parameterType="map" resultMap="realtimeTotalResult">
+        select ID, User_IMSI as Content, RecordTime
+        from hpl_log 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="deviceID != null">
+                AND DeviceID in (#{deviceID})
+            </if>
+            <if test="startDate != null">
+                AND RecordTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND RecordTime &lt;= #{endDate} 
+            </if>
+        </trim>    
+        
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                 ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                 order by RecordTime DESC
+            </otherwise>
+        </choose>
+          
+    </select>
+    
+    <!-- 查询I即时统计唯一IMSI信息数量 -->
+    <select id="findTotalImsiNumberByCondition" resultType="Integer" parameterType="map">
+        select count(User_IMSI) a
+        from hpl_log 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="deviceID != null">
+                AND DeviceID in (#{deviceID})
+            </if>
+            <if test="startDate != null">
+                AND RecordTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND RecordTime &lt;= #{endDate} 
+            </if>
+        </trim>    
+    </select>
+    
+    <!-- 查询扫描次数 -->
+    <select id="findScanTimesByCondition" resultType="Integer" parameterType="map">
+        select sum(Times) a
+        from visit_log 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="deviceID != null">
+                AND DeviceID in (#{deviceID})
+            </if>
+            <if test="startDate != null">
+                AND StartTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND StartTime &lt;= #{endDate} 
+            </if>
+        </trim>    
+        
+    </select>
+    
+</mapper>

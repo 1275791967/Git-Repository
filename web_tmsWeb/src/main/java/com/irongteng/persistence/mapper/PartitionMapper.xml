@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.PartitionMapper">
+    
+    <cache />
+    <!-- 查询表的信息，用于判断是否为分区表或者是否存在某个分区 -->
+    <select id="findPartition" parameterType="map" resultType="String">
+        select partition_name from information_schema.PARTITIONS where table_name=#{tableName} and partition_method='range'  and partition_name != 'pMax'
+        <if test="partName!=null and partName!=''">
+            and partition_name=#{partName}
+        </if>
+        <if test="endPartName!=null and endPartName!=''">
+            and partition_name &lt;= #{endPartName}
+        </if>
+    </select>
+    
+    <!-- 查询表的信息，用于判断是否为分区表或者是否存在某个分区 -->
+    <select id="findNumPartition" parameterType="map" resultType="Integer">
+        select count(*) from information_schema.PARTITIONS where table_name=#{tableName} and partition_method='range'  and partition_name != 'pMax'
+        <if test="partName!=null and partName!=''">
+            and partition_name=#{partName}
+        </if>
+        <if test="endPartName!=null and endPartName!=''">
+            and partition_name &lt;= #{endPartName}
+        </if>
+    </select>
+    
+    <!-- 添加分区表 -->
+    <update id="addPartition" parameterType="map">
+        alter table ${tableName} reorganize partition 
+        <choose>
+            <when test="dividPartName != null and dividPartName !='' and dividPartName!='pMax'">
+                ${dividPartName}
+            </when>
+            <otherwise>
+                pMax 
+            </otherwise>
+        </choose>
+        into ( 
+            partition ${partName} values less than (
+            to_days(
+                <choose>
+                    <when test="recordTime != null">
+                        #{recordTime}
+                    </when>
+                    <otherwise>
+                        date_sub(date_format(substring(#{partName}, 2), '%Y%m%d'), interval -1 day)
+                    </otherwise>
+                </choose>
+            )),
+            <choose>
+                <when test="dividPartName != null and dividPartName !='' and dividPartName!='pMax'">
+                    partition ${dividPartName} values less than (to_days(date_sub(date_format(substring(#{dividPartName}, 2), '%Y%m%d'), interval -1 day)))
+                </when>
+                <otherwise>
+                    partition pMax values less than (to_days('9999-12-31'))
+                </otherwise>
+            </choose>
+        )
+    </update>
+    
+    <!-- 删除分区表 -->
+    <update id="removePartition" parameterType="map">
+        alter table ${tableName} drop partition ${partName}
+    </update>
+    
+</mapper>

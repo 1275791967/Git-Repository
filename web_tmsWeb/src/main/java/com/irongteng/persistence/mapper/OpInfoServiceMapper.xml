@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.OpInfoServiceMapper">
+
+	<resultMap id="opInfoResult" type="OpInfo">
+		<result property="id" jdbcType="INTEGER" column="ID" />
+		<result property="opNo" jdbcType="VARCHAR" column="OpNo" />
+		<result property="opName" jdbcType="VARCHAR" column="OpName" />
+		<result property="createTime" jdbcType="TIMESTAMP" column="CreateTime" />
+		<result property="updateTime" jdbcType="TIMESTAMP" column="UpdateTime" />
+		<result property="remark" jdbcType="VARCHAR" column="Remark" />
+	</resultMap>
+
+	<sql id="Base_Column_List">
+		ID, OpNo, OpName, CreateTime,UpdateTime,remark
+	</sql>
+
+	<sql id="Insert_Column_List">
+		OpNo, OpName, CreateTime,UpdateTime,remark
+	</sql>
+
+	<select id="load" parameterType="Integer" resultMap="opInfoResult">
+		SELECT
+		<include refid="Base_Column_List" />
+		FROM t_op_info
+		WHERE
+		ID = #{id}
+	</select>
+	
+	  <select id="isUniqueOpNo" parameterType="String" resultType="Integer">
+        select count(0) as c
+        from t_op_info
+        where
+        ID != #{id} and OpNo = #{opNo}
+    </select>
+    
+
+	<select id="findNumberByCondition" resultType="Integer"
+		parameterType="map">
+		select count(0) as c
+		from t_op_info
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+			<if test="id != null">
+				AND ID=#{id}
+			</if>
+			<if test="opNo != null">
+				AND OpNo=#{opNo}
+			</if>
+			<if test="keywords != null">
+				AND opName LIKE "%"#{keywords}"%" or opNo LIKE "%"#{keywords}"%"
+			</if>
+		</trim>
+	</select>
+
+	<select id="findPageBreakByCondition" resultMap="opInfoResult"
+		parameterType="map">
+		SELECT
+		<include refid="Base_Column_List" />
+		from t_op_info
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+			<if test="id != null">
+				AND ID=#{id}
+			</if>
+			<if test="opNo != null">
+				AND OpNo=#{opNo}
+			</if>
+			<if test="keywords != null">
+				AND opName LIKE "%"#{keywords}"%" or opNo LIKE "%"#{keywords}"%"
+			</if>
+		</trim>
+		<choose>
+			<when test="orderField !=null and orderField !=''">
+				ORDER BY ${orderField}
+				<if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+			</when>
+			<otherwise>
+				order by opName
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="queryByName" parameterType="String" resultMap="opInfoResult">
+		select
+		<include refid="Base_Column_List" />
+		from t_op_info
+		where
+		<if test="opName!=null">
+			OpName = #{opName}
+		</if>
+	</select>
+
+	<select id="queryByNo" parameterType="Integer" resultMap="opInfoResult">
+		select
+		<include refid="Base_Column_List" />
+		from t_op_info
+		where
+		<if test="opNo != null">
+			opNo = #{opNo}
+		</if>
+	</select>
+
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id"
+		parameterType="OpInfo">
+		INSERT INTO t_op_info (
+		<include refid="Insert_Column_List" />
+		) VALUES (
+		#{opNo},
+		#{opName},
+		#{createTime},
+		#{updateTime},
+		#{remark}
+		)
+	</insert>
+
+	<delete id="delete" parameterType="Integer">
+		DELETE FROM t_op_info where ID=#{id}
+	</delete>
+
+	<update id="update" parameterType="OpInfo">
+		UPDATE t_op_info SET
+		OpNo=#{opNo},
+		OpName=#{opName},
+		CreateTime=#{createTime},
+		UpdateTime=#{updateTime},
+		Remark=#{remark}
+		where
+		ID = #{id}
+	</update>
+</mapper> 

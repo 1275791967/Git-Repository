@@ -1,0 +1,565 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.irongteng.persistence.mapper.LoadInfoMapper">
+
+	<resultMap id="loadInResult" type="LoadInfo">
+		<result property="id" jdbcType="INTEGER" column="ID" />
+		
+		<result property="ch1Counts" jdbcType="INTEGER" column="Ch1Counts" />
+		<result property="ch1NormalCounts" jdbcType="INTEGER" column="Ch1NormalCounts" />
+		<result property="ch1WaitTranslates" jdbcType="INTEGER" column="Ch1WaitTranslates" />
+		
+		<result property="ch2Counts" jdbcType="INTEGER" column="Ch2Counts" />
+		<result property="ch2NormalCounts" jdbcType="INTEGER" column="Ch2NormalCounts" />
+		<result property="ch2WaitTranslates" jdbcType="INTEGER" column="Ch2WaitTranslates" />
+		
+		<result property="ch3Counts" jdbcType="INTEGER" column="Ch3Counts" />
+		<result property="ch3NormalCounts" jdbcType="INTEGER" column="Ch3NormalCounts" />
+		<result property="ch3WaitTranslates" jdbcType="INTEGER" column="Ch3WaitTranslates" />
+		
+		<result property="ch4Counts" jdbcType="INTEGER" column="Ch4Counts" />
+		<result property="ch4NormalCounts" jdbcType="INTEGER" column="Ch4NormalCounts" />
+		<result property="ch4WaitTranslates" jdbcType="INTEGER" column="Ch4WaitTranslates" />
+		
+		<result property="ch5Counts" jdbcType="INTEGER" column="Ch5Counts" />
+		<result property="ch5NormalCounts" jdbcType="INTEGER" column="Ch5NormalCounts" />
+		<result property="ch5WaitTranslates" jdbcType="INTEGER" column="Ch5WaitTranslates" />
+		
+		<result property="alarmStatus" jdbcType="INTEGER" column="AlarmStatus" />
+		<result property="recordTime" jdbcType="TIMESTAMP" column="RecordTime" />
+		<result property="remark" jdbcType="VARCHAR" column="Remark" />
+		<association property="device" javaType="Device" column="DeviceID" resultMap="deviceResult" />
+	</resultMap>
+
+	<resultMap id="deviceResult" type="Device">
+		<result property="id" jdbcType="INTEGER" column="DeviceID" />
+		<result property="customerID" jdbcType="INTEGER" column="CustomerID" />
+		<result property="deviceName" jdbcType="VARCHAR" column="DeviceName" />
+		<result property="deviceIP" jdbcType="VARCHAR" column="DeviceIP" />
+		<result property="deviceType" jdbcType="INTEGER" column="DeviceType" />
+		<result property="featureCode" jdbcType="VARCHAR" column="FeatureCode" />
+		<result property="address" jdbcType="VARCHAR" column="Address" />
+		<result property="areaLocation" jdbcType="VARCHAR" column="AreaLocation" />
+		<result property="longitude" jdbcType="VARCHAR" column="Longitude" />
+		<result property="latitude" jdbcType="VARCHAR" column="Latitude" />
+		<result property="createTime" jdbcType="TIMESTAMP" column="CreateTime" />
+		<result property="remark" jdbcType="VARCHAR" column="Remark" />
+	</resultMap>
+
+	<sql id="Insert_Column_List">
+		deviceID,ch1Counts,ch1NormalCounts,ch1WaitTranslates,ch2Counts,ch2NormalCounts,
+		ch2WaitTranslates,ch3Counts,ch3NormalCounts,ch3WaitTranslates,ch4Counts,ch4NormalCounts,ch4WaitTranslates,ch5Counts,
+		ch5NormalCounts,ch5WaitTranslates,alarmStatus,recordTime,remark
+	</sql>
+	
+	<sql id="Base_Column_List">
+		td.id,
+		tc.deviceName,
+		td.deviceID,
+		td.ch1Counts,
+		td.ch1NormalCounts,
+		td.ch1WaitTranslates,
+		td.ch2Counts,
+		td.ch2NormalCounts,
+		td.ch2WaitTranslates,
+		td.ch3Counts,
+		td.ch3NormalCounts,
+		td.ch3WaitTranslates,
+		td.ch4Counts,
+		td.ch4NormalCounts,
+		td.ch4WaitTranslates,
+		td.ch5Counts,
+		td.ch5NormalCounts,
+		td.ch5WaitTranslates,
+		td.alarmStatus,
+		td.recordTime,
+		td.remark,
+		tc.ID as DeviceID,
+		tc.customerID,
+		tc.deviceIP,
+		tc.areaLocation,
+		tc.deviceType,
+		tc.featureCode,
+		tc.address,
+		tc.longitude,
+		tc.latitude,
+		tc.createTime
+	</sql>
+
+	<sql id="Base_Table_List">
+		t_loadinfo td
+		inner join t_device tc on td.deviceID=tc.ID
+	</sql>
+
+	<sql id="Base_Query_List">
+		SELECT
+		<include refid="Base_Column_List" />
+		FROM
+		<include refid="Base_Table_List" />
+	</sql>
+
+	<sql id="Base_Count_List">
+		select count(0) as c from
+		<include refid="Base_Table_List" />
+	</sql>
+
+	<sql id="Base_Order_By">
+		order by td.id
+	</sql>
+	
+	<sql id="Base_Page_Condition">
+		<choose>
+			<when test="orderField !=null and orderField !=''">
+				ORDER BY ${orderField}
+				<if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+			</when>
+			<otherwise>
+				<include refid="Base_Order_By" />
+			</otherwise>
+		</choose>
+	</sql>
+
+	<select id="load" parameterType="Integer" resultMap="loadInResult">
+		<include refid="Base_Query_List" />
+		WHERE td.ID = #{id}
+	</select>
+
+	<sql id="Base_Where_Condition">
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+			<if test="deviceID != null">
+				AND td.DeviceID = #{deviceID}
+			</if>
+			<if test="deviceName != null">
+				AND tc.DeviceName = #{deviceName}
+			</if>
+			<if test="ch1Counts != null">
+				AND dd.Ch1Counts = #{ch1Counts}
+			</if>
+			<if test="ch1NormalCounts != null">
+				AND td.Ch1NormalCounts = #{ch1NormalCounts}
+			</if>
+			<if test="ch1WaitTranslates != null">
+				AND td.Ch1WaitTranslates = #{ch1WaitTranslates}
+			</if>
+			<if test="ch2Counts != null">
+				AND td.Ch2Counts = #{ch2Counts}
+			</if>
+			<if test="ch2NormalCounts != null">
+				AND td.Ch2NormalCounts = #{ch2NormalCounts}
+			</if>
+			<if test="ch2WaitTranslates != null">
+				AND td.Ch2WaitTranslates = #{ch2WaitTranslates}
+			</if>
+			<if test="ch3Counts != null">
+				AND td.Ch3Counts = #{ch3Counts}
+			</if>
+			<if test="ch3NormalCounts != null">
+				AND td.Ch3NormalCounts = #{ch3NormalCounts}
+			</if>
+			<if test="ch3WaitTranslates != null">
+				AND td.Ch3WaitTranslates = #{ch3WaitTranslates}
+			</if>
+			<if test="ch4Counts != null">
+				AND td.Ch4Counts = #{ch4Counts}
+			</if>
+			<if test="ch4NormalCounts != null">
+				AND td.Ch4NormalCounts = #{ch4NormalCounts}
+			</if>
+			<if test="ch4WaitTranslates != null">
+				AND td.Ch4WaitTranslates = #{ch4WaitTranslates}
+			</if>
+			<if test="ch5Counts != null">
+				AND td.Ch5Counts = #{ch5Counts}
+			</if>
+			<if test="ch5NormalCounts != null">
+				AND td.Ch5NormalCounts = #{ch5NormalCounts}
+			</if>
+			<if test="ch5WaitTranslates != null">
+				AND td.Ch5WaitTranslates = #{ch5WaitTranslates}
+			</if>
+			<if test="alarmStatus != null">
+				AND td.AlarmStatus = #{alarmStatus}
+			</if>
+			<if test="recordTime != null">
+				AND td.RecordTime = #{recordTime}
+			</if>
+			<if test="remark != null">
+				AND td.Remark = #{remark}
+			</if>
+			<if test="customerID != null">
+				AND tc.CustomerID = #{customerID}
+			</if>
+			<if test="deviceIP != null">
+				AND tc.DeviceIP = #{deviceIP}
+			</if>
+			<if test="areaLocation != null">
+				AND tc.AreaLocation = #{areaLocation}
+			</if>
+			<if test="deviceType != null">
+				AND tc.DeviceType = #{deviceType}
+			</if>
+			<if test="featureCode != null">
+				AND tc.FeatureCode = #{featureCode}
+			</if>
+			<if test="address != null">
+				AND tc.Address = #{address}
+			</if>
+			<if test="longitude != null">
+				AND tc.Longitude = #{longitude}
+			</if>
+			<if test="latitude != null">
+				AND tc.Latitude = #{latitude}
+			</if>
+			<if test="keywords != null">
+				AND (
+				tc.deviceName LIKE "%"#{keywords}"%"
+				)
+			</if>
+		</trim>
+	</sql>
+
+	<select id="queryByDeviceID" parameterType="Integer" resultMap="loadInResult">
+		select
+		td.id,tc.deviceName,td.deviceID,td.ch1Counts,td.ch1NormalCounts,
+		td.ch1WaitTranslates,td.ch2Counts,td.ch2NormalCounts,td.
+		ch2WaitTranslates,td.ch3Counts,
+		td.ch3NormalCounts,td.ch3WaitTranslates,td.ch4Counts,td.ch4NormalCounts,td.ch4WaitTranslates,
+		td.ch5Counts,td.ch5NormalCounts,td.ch5WaitTranslates,td.alarmStatus,
+		td.recordTime,td.remark
+		from t_loadinfo td inner join t_device tc on
+		td.deviceID=tc.ID where
+		td.deviceID = #{deviceID}
+	</select>
+
+	<select id="analyzeTranslateResult" parameterType="Integer"
+		resultMap="transtFlowResult">
+		SELECT
+		id,
+		deviceID,
+		ch1Counts,
+		ch1NormalCounts,
+		ch1WaitTranslates,
+		ch2Counts,
+		ch2NormalCounts,
+		ch2WaitTranslates,
+		ch3Counts,
+		ch3NormalCounts,
+		ch3WaitTranslates,
+		ch4Counts,
+		ch4NormalCounts,
+		ch4WaitTranslates,
+		ch5Counts,
+		ch5NormalCounts,
+		ch5WaitTranslates,
+		alarmStatus,
+		recordTime,
+		remark
+		FROM t_loadinfo
+		WHERE
+		DeviceID = #{deviceID}
+	</select>
+
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id"
+		parameterType="LoadInfo">
+		INSERT INTO t_loadinfo (
+		<include refid="Insert_Column_List" />
+		) VALUES (
+		#{device.id},
+		#{ch1Counts},
+		#{ch1NormalCounts},
+		#{ch1WaitTranslates},
+		#{ch2Counts},
+		#{ch2NormalCounts},
+		#{ch2WaitTranslates},
+		#{ch3Counts},
+		#{ch3NormalCounts},
+		#{ch3WaitTranslates},
+		#{ch4Counts},
+		#{ch4NormalCounts},
+		#{ch4WaitTranslates},
+		#{ch5Counts},
+		#{ch5NormalCounts},
+		#{ch5WaitTranslates},
+		#{alarmStatus},
+		#{recordTime},
+		#{remark}
+		)
+	</insert>
+
+	<update id="update" parameterType="LoadInfo">
+		UPDATE t_loadinfo
+		SET
+		DeviceID=#{device.id},
+		Ch1Counts=#{ch1Counts},
+		Ch1NormalCounts=#{ch1NormalCounts},
+		Ch1WaitTranslates=#{ch1WaitTranslates},
+		Ch2Counts=#{ch2Counts},
+		Ch2NormalCounts=#{ch2NormalCounts},
+		Ch2WaitTranslates=#{ch2WaitTranslates},
+		Ch3Counts= #{ch3Counts},
+		Ch3NormalCounts=#{ch3NormalCounts},
+		Ch3WaitTranslates=#{ch3WaitTranslates},
+		Ch4Counts= #{ch4Counts},
+		Ch4NormalCounts=#{ch4NormalCounts},
+		Ch4WaitTranslates= #{ch4WaitTranslates},
+		Ch5Counts=#{ch5Counts},
+		Ch5NormalCounts= #{ch5NormalCounts},
+		Ch5WaitTranslates=#{ch5WaitTranslates},
+		AlarmStatus= #{alarmStatus},
+		RecordTime=#{recordTime},
+		Remark=#{remark}
+		where
+		ID = #{id}
+	</update>
+
+	<select id="countAll" resultType="Integer">
+		<include refid="Base_Count_List" />
+	</select>
+
+	<select id="findAll" resultMap="loadInResult">
+		<include refid="Base_Query_List" />
+		<include refid="Base_Order_By" />
+	</select>
+
+	<update id="updateSelective" parameterType="LoadInfo">
+		UPDATE t_loadinfo
+		<set>
+			<if test="device.id!=null">
+				DeviceID=#{device.id},
+			</if>
+			<if test="ch1Counts!=null">
+				Ch1Counts=#{ch1Counts},
+			</if>
+			<if test="ch1NormalCounts!=null">
+				Ch1NormalCounts=#{ch1NormalCounts},
+			</if>
+			<if test="ch1WaitTranslates!=null">
+				Ch1WaitTranslates=#{ch1WaitTranslates},
+			</if>
+			<if test="ch2Counts!=null">
+				Ch2Counts=#{ch2Counts},
+			</if>
+			<if test="ch2NormalCounts!=null">
+				Ch2NormalCounts=#{ch2NormalCounts},
+			</if>
+			<if test="ch2WaitTranslates!=null">
+				Ch2WaitTranslates=#{ch2WaitTranslates},
+			</if>
+			<if test="ch3Counts!=null">
+				Ch3Counts= #{ch3Counts},
+			</if>
+			<if test="ch3NormalCounts!=null">
+				Ch3NormalCounts=#{ch3NormalCounts},
+			</if>
+			<if test="ch3WaitTranslates!=null">
+				Ch3WaitTranslates= #{ch3WaitTranslates},
+			</if>
+			<if test="ch4Counts!=null">
+				Ch4Counts= #{ch4Counts},
+			</if>
+			<if test="ch4NormalCounts!=null">
+				Ch4NormalCounts= #{ch4NormalCounts},
+			</if>
+			<if test="ch4WaitTranslates!=null">
+				Ch4WaitTranslates= #{ch4WaitTranslates},
+			</if>
+			<if test="ch5Counts!=null">
+				Ch5Counts= #{ch5Counts},
+			</if>
+			<if test="ch5NormalCounts!=null">
+				Ch5NormalCounts= #{ch5NormalCounts},
+			</if>
+			<if test="ch5WaitTranslates!=null">
+				Ch5WaitTranslates= #{ch5WaitTranslates},
+			</if>
+			<if test="alarmStatus!=null">
+				AlarmStatus= #{alarmStatus},
+			</if>
+			<if test="recordTime!=null">
+				RecordTime=#{recordTime},
+			</if>
+			<if test="remark!=null">
+				Remark=#{remark}
+			</if>
+		</set>
+		WHERE
+		ID = #{id}
+	</update>
+
+	<!-- 批量更新 -->
+	<update id="updateBatchSelective" parameterType="java.util.List">
+		<foreach item="item" collection="list" index="index" open=""
+			close="" separator=";">
+			UPDATE t_loadinfo
+			SET
+			DeviceID=#{item.device.id},
+			Ch1Counts=#{item.ch1Counts},
+			Ch1NormalCounts=#{item.ch1NormalCounts},
+			Ch1WaitTranslates=#{item.ch1WaitTranslates},
+			Ch2Counts=#{item.ch2Counts},
+			Ch2NormalCounts=#{item.ch2NormalCounts},
+			Ch2WaitTranslates=#{item.ch2WaitTranslates},
+			Ch3Counts= #{item.ch3Counts},
+			Ch3NormalCounts=#{item.ch3NormalCounts},
+			Ch3WaitTranslates= #{item.ch3WaitTranslates},
+			Ch4Counts= #{item.ch4Counts},
+			Ch4NormalCounts= #{item.ch4NormalCounts},
+			Ch4WaitTranslates= #{item.ch4WaitTranslates},
+			Ch5Counts= #{item.ch5Counts},
+			Ch5NormalCounts= #{item.ch5NormalCounts},
+			Ch5WaitTranslates= #{item.ch5WaitTranslates},
+			AlarmStatus= #{item.alarmStatus},
+			RecordTime=#{item.recordTime},
+			Remark=#{item.remark}
+			WHERE
+			ID = #{item.id}
+		</foreach>
+	</update>
+
+	<insert id="addBatch" parameterType="java.util.List">
+		insert into t_loadinfo(
+		<include refid="Insert_Column_List" />
+		)
+		values
+		<foreach item="item" index="index" collection="list"
+			separator=",">
+			(
+			#{item.deviceID},
+			#{item.ch1Counts},
+			#{item.ch1NormalCounts},
+			#{item.ch1WaitTranslates},
+			#{item.ch2Counts},
+			#{item.ch2NormalCounts},
+			#{item.ch2WaitTranslates},
+			#{item.ch3Counts},
+			#{item.ch3NormalCounts},
+			#{item.ch3WaitTranslates},
+			#{item.ch4Counts},
+			#{item.ch4NormalCounts},
+			#{item.ch4WaitTranslates},
+			#{item.ch5Counts},
+			#{item.ch5NormalCounts},
+			#{item.ch5WaitTranslates},
+			#{item.alarmStatus},
+			#{item.recordTime},
+			#{item.remark}
+			)
+		</foreach>
+	</insert>
+
+	<update id="addOrUpdate" parameterType="LoadInfo">
+		INSERT into t_loadinfo(
+		<include refid="Insert_Column_List" />
+		)
+		values(
+		#{item.deviceID},
+		#{item.ch1Counts},
+		#{item.ch1NormalCounts},
+		#{item.ch1WaitTranslates},
+		#{item.ch2Counts},
+		#{item.ch2NormalCounts},
+		#{item.ch2WaitTranslates},
+		#{item.ch3Counts},
+		#{item.ch3NormalCounts},
+		#{item.ch3WaitTranslates},
+		#{item.ch4Counts},
+		#{item.ch4NormalCounts},
+		#{item.ch4WaitTranslates},
+		#{item.ch5Counts},
+		#{item.ch5NormalCounts},
+		#{item.ch5WaitTranslates},
+		#{item.alarmStatus},
+		#{item.recordTime},
+		#{item.remark}
+		)
+		ON DUPLICATE KEY UPDATE ID=#{id}
+	</update>
+	
+	
+	     <select id="isUniqueID" parameterType="String" resultType="Integer">
+        select count(0) as c
+        from t_loadinfo
+        where
+        ID != #{id} and DeviceID = #{deviceID}
+    </select>
+
+	<delete id="delete" parameterType="Integer">
+		DELETE FROM t_loadinfo where ID=#{id}
+	</delete>
+
+	<select id="findByCondition" resultMap="loadInResult"
+		parameterType="map">
+		<include refid="Base_Query_List" />
+		<include refid="Base_Where_Condition" />
+		<include refid="Base_Page_Condition" />
+	</select>
+
+	<select id="findPageBreakByCondition" resultMap="loadInResult"
+		parameterType="map">
+		<include refid="Base_Query_List" />
+		<include refid="Base_Where_Condition" />
+		<include refid="Base_Page_Condition" />
+	</select>
+
+	<select id="findNumberByCondition" resultType="Integer"
+		parameterType="map">
+		<include refid="Base_Count_List" />
+		<include refid="Base_Where_Condition" />
+	</select>
+
+	<!-- 批量删除 -->
+	<delete id="deleteBatch" parameterType="java.util.List">
+		DELETE FROM t_loadinfo WHERE
+		ID in
+		<foreach collection="list" item="item" open="(" separator=","
+			close=")">
+			#{item}
+		</foreach>
+	</delete>
+
+	<select id="channelOneTranslateRatio" resultMap="loadInResult"
+		parameterType="map">
+		select
+		<include refid="Insert_Column_List" />
+		, ch1Counts / ch1NormalCounts as ratio from t_loadinfo
+		where
+		ch1WaitTranslates != 0 order by ratio asc
+	</select>
+
+	<select id="channelTwoTranslateRatio" resultMap="loadInResult"
+		parameterType="map">
+		select
+		<include refid="Insert_Column_List" />
+		, ch2Counts / ch2NormalCounts as ratio from t_loadinfo
+		where
+		ch2WaitTranslates != 0 order by ratio asc
+	</select>
+
+	<select id="channeThreeTranslateRatio" resultMap="loadInResult"
+		parameterType="map">
+		select
+		<include refid="Insert_Column_List" />
+		, ch3Counts / ch3NormalCounts as ratio from t_loadinfo
+		where
+		ch3WaitTranslates != 0 order by ratio asc
+	</select>
+
+	<select id="channeFourTranslateRatio" resultMap="loadInResult"
+		parameterType="map">
+		select
+		<include refid="Insert_Column_List" />
+		, ch4Counts / ch4NormalCounts as ratio from t_loadinfo
+		where
+		ch4WaitTranslates != 0 order by ratio asc
+	</select>
+
+	<select id="channeFiveTranslateRatio" resultMap="loadInResult"
+		parameterType="map">
+		select
+		<include refid="Insert_Column_List" />
+		, ch5Counts / ch5NormalCounts as ratio from t_loadinfo
+		where
+		ch5WaitTranslates != 0 order by ratio asc
+	</select>
+</mapper>

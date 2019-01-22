@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.VisitLogMapper">
+    
+    <cache />
+    
+    <resultMap type="VisitLog" id="visitLogResult">
+        <id property="id" jdbcType="BIGINT" column="VisitLogID" />
+        <result property="deviceMac" jdbcType="VARCHAR" column="Device_MAC" />
+        <result property="userMac" jdbcType="VARCHAR" column="User_MAC" />
+        <result property="apMac" column="AP_Mac" />
+        <result property="apName" column="AP_Name" />
+        <result property="signalStrength" column="SignalStrength" />
+        <result property="pkType" column="PK_Type" />
+        <result property="times" column="Times" />
+        <result property="startTime" jdbcType="TIMESTAMP" column="StartTime" />
+        <result property="endTime" jdbcType="TIMESTAMP" column="EndTime" />
+        <result property="stayTime" column="StayTime" />
+        <result property="sourceIP" column="Source_IP" />
+        <result property="destIP" column="Dest_IP" />
+        <result property="sourcePort" column="Source_Port" />
+        <result property="destPort" column="Dest_Port" />
+        <association property="device" javaType="Device" column="DeviceID" resultMap="deviceResult" />
+        <!-- <association property="monitor" javaType="Monitor" column="User_Mac" resultMap="monitorResult" /> -->
+    </resultMap>
+    <!--    
+    <resultMap id="monitorResult" type="Monitor">
+        <id property="id" jdbcType="INTEGER" column="MonitorID"/>
+        <result property="name" jdbcType="VARCHAR" column="MonitorName" />
+        <result property="mac" jdbcType="VARCHAR" column="User_Mac" />
+    </resultMap>
+    -->
+    <!-- 设备信息表 -->
+    <resultMap id="deviceResult" type="Device">
+        <id property="id" jdbcType="INTEGER" column="DeviceID" />
+        <result property="deviceName" jdbcType="VARCHAR" column="DeviceName" />
+        <result property="deviceNumber" jdbcType="VARCHAR" column="DeviceNumber" />
+        <result property="attachNumber" jdbcType="VARCHAR" column="attachNumber" />
+        
+        <result property="commCategory" jdbcType="INTEGER" column="CommCategory" />
+        <result property="ipAddress" jdbcType="VARCHAR" column="IpAddress" />
+        <result property="port" jdbcType="INTEGER" column="Port" />
+        <result property="status" jdbcType="INTEGER" column="Status" />
+        <association property="site" javaType="Site" column="SiteID" resultMap="siteResult" />
+    </resultMap>
+    <resultMap id="siteResult" type="Site">
+        <result property="id" jdbcType="INTEGER" column="SiteID"/>
+        <result property="siteName" jdbcType="VARCHAR" column="SiteName" />
+        <result property="longitude" jdbcType="DOUBLE" column="Longitude" />
+        <result property="latitude" jdbcType="DOUBLE" column="Latitude" />
+        <result property="address" jdbcType="VARCHAR" column="Address" />
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        d.SiteID, s.SiteName, a.DeviceID, d.DeviceName, a.id as VisitLogID, a.Device_Mac, a.User_Mac, a.AP_Mac, a.AP_Name, a.PK_Type, a.SignalStrength,
+            a.Times, a.StartTime, a.EndTime, a.StayTime, a.Source_IP, a.Dest_IP, a.Source_Port, a.Dest_Port
+    </sql>
+    <select id="load" parameterType="long" resultMap="visitLogResult">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM visit_log a
+            inner join device d on d.ID=a.DeviceID 
+            left join t_site s on s.ID=d.siteID 
+         WHERE 
+            a.ID = #{id}
+    </select>
+    
+    <!-- 查询所有的ID -->
+    <select id="findAllIds" resultType="Long">
+        SELECT ID FROM visit_log
+    </select>
+    
+    <select id="countAll" resultType="Long">
+        SELECT count(0) FROM visit_log    
+    </select>
+    
+    <select id="findAll" resultMap="visitLogResult">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM visit_log a
+            inner join device d on d.ID=a.DeviceID 
+            left join t_site s on s.ID=d.siteID 
+    </select>
+    
+    <insert id="insert" parameterType="VisitLog" useGeneratedKeys="true" keyProperty="id"> 
+        insert into visit_log(
+            DeviceID, 
+            Device_Mac, 
+            User_Mac, 
+            AP_Mac, 
+            AP_Name, 
+            SignalStrength, 
+            PK_Type, Times, 
+            StartTime, 
+            EndTime, 
+            StayTime, 
+            Source_IP,
+            Dest_IP, 
+            Source_Port, 
+            Dest_Port
+        ) values(
+            #{device.id},
+            #{deviceMac}, 
+            #{userMac}, 
+            #{apMac}, 
+            #{apName}, 
+            #{signalStrength}, 
+            #{pkType}, 
+            #{times}, 
+            #{startTime}, 
+            #{endTime}, 
+            #{stayTime}, 
+            #{sourceIP}, 
+            #{destIP}, 
+            #{sourcePort}, 
+            #{destPort}
+      )
+    </insert>
+    
+    <insert id="addBatch" parameterType="java.util.List">
+        insert into visit_log(
+            DeviceID,
+            Device_Mac, 
+            User_Mac, 
+            AP_Mac, 
+            AP_Name, 
+            SignalStrength, 
+            PK_Type, Times, 
+            StartTime, EndTime, 
+            StayTime, 
+            Source_IP,
+            Dest_IP, 
+            Source_Port, 
+            Dest_Port)
+        values
+        <foreach item="item" index="index" collection="list" separator=",">
+        (
+             #{item.device.id},
+             #{item.deviceMac},
+             #{item.userMac},
+             #{item.apMac},
+             #{item.apName},
+             #{item.signalStrength},
+             #{item.pkType},
+             #{item.times},
+             #{item.startTime},
+             #{item.endTime},
+             #{item.stayTime},
+             #{item.sourceIP},
+             #{item.destIP},
+             #{item.sourcePort},
+             #{item.destPort}
+        )  
+        </foreach>
+    </insert>
+    
+    <!-- 更新 -->
+    <update id="updateSelective" parameterType="VisitLog">
+        UPDATE visit_log 
+        <set>
+            <if test="device!=null and device.id!=null">
+            DeviceID=#{device.id},
+            </if>
+            <if test="deviceMac!=null">
+            Device_Mac=#{deviceMac},
+            </if>
+            <if test="userMac!=null">
+            User_Mac=#{userMac},
+            </if>
+            <if test="apMac!=null">
+            AP_Mac=#{apMac},
+            </if>
+            <if test="apName!=null">
+            AP_Name=#{apName},
+            </if>
+            <if test="pkType!=null">
+            PK_Type=#{pkType},
+            </if>
+            <if test="signalStrength!=null">
+            SignalStrength=#{signalStrength},
+            </if>
+            <if test="times!=null">
+            Times=#{times},
+            </if>
+            <if test="startTime!=null">
+            StartTime=#{startTime},
+            </if>
+            <if test="endTime!=null">
+            EndTime=#{endTime},
+            </if>
+            <if test="stayTime!=null">
+            StayTime=#{stayTime},
+            </if>
+            <if test="sourceIP!=null">
+            Source_IP=#{sourceIP},
+            </if>
+            <if test="destIP!=null">
+            Dest_IP=#{destIP},
+            </if>
+            <if test="sourcePort!=null">
+            Source_Port=#{sourcePort},
+            </if>
+            <if test="destPort!=null">
+            Dest_Port=#{destPort}
+            </if>            
+        </set>
+        WHERE 
+            ID = #{id}
+    </update>
+    
+    <update id="update" parameterType="VisitLog" >
+        update visit_log 
+        set 
+            <if test="device!=null and device.id!=null">
+            DeviceID=#{device.id},
+            </if>
+            Device_Mac=#{deviceMac},
+            User_Mac=#{userMac},
+            AP_Mac=#{apMac},
+            AP_Name=#{apName},
+            PK_Type=#{pkType},
+            SignalStrength=#{signalStrength},
+            Times=#{times},
+            StartTime=#{startTime},
+            EndTime=#{endTime},
+            StayTime=#{stayTime},
+            Source_IP=#{sourceIP},
+            Dest_IP=#{destIP},
+            Source_Port=#{sourcePort},
+            Dest_Port=#{destPort}
+         where ID=#{id}
+    </update>
+    
+    <delete id="delete" parameterType="long">
+        delete from visit_log where ID=#{id}
+    </delete>
+    
+    <select id="findPageBreakByCondition" parameterType="map" resultMap="visitLogResult">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM visit_log a 
+            inner join device d on d.ID=a.DeviceID 
+            left join t_site s on s.ID=d.siteID 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="siteID != null">
+                AND s.ID in (#{siteID})
+            </if>
+            <if test="deviceID != null">
+                AND d.ID in (#{deviceID})
+            </if>
+            <if test="monitorID != null">
+                AND a.User_Mac in(select mac from monitor where ID in (#{monitorID})
+            </if>
+            <if test="mac != null">
+                AND a.User_Mac=#{mac})
+            </if>
+            <if test="startDate != null">
+                AND a.StartTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND a.StartTime &lt;= #{endDate} 
+            </if>
+            <if test="keywords != null">
+                AND ( s.SiteName like "%"#{keywords}"%" 
+                    OR d.DeviceName like "%"#{keywords}"%" 
+                    OR a.User_Mac like "%"#{keywords}"%"
+                    OR a.Device_Mac like "%"#{keywords}"%"
+                )
+            </if>
+        </trim>
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                ORDER BY a.ID DESC
+            </otherwise>
+        </choose>   
+    </select>
+     
+    <select id="findNumberByCondition" resultType="Integer" parameterType="map">
+        SELECT count(0) as c
+        FROM visit_log a 
+            inner join device d on d.ID=a.DeviceID 
+            left join t_site s on s.ID=d.siteID 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="siteID != null">
+                AND s.ID in (#{siteID})
+            </if>
+            <if test="deviceID != null">
+                AND d.ID in (#{deviceID})
+            </if>
+            <if test="monitorID != null">
+                AND a.User_Mac in(select mac from monitor where ID in (#{monitorID})
+            </if>
+            <if test="mac != null">
+                AND a.User_Mac=#{mac}
+            </if>
+            <if test="startDate != null">
+                AND a.StartTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND a.StartTime &lt;= #{endDate} 
+            </if>
+            <if test="keywords != null">
+                AND ( s.SiteName like "%"#{keywords}"%" 
+                    OR d.DeviceName like "%"#{keywords}"%" 
+                    OR a.User_Mac like "%"#{keywords}"%"
+                    OR a.Device_Mac like "%"#{keywords}"%"
+                )
+            </if>
+        </trim>
+    </select>
+    
+</mapper>

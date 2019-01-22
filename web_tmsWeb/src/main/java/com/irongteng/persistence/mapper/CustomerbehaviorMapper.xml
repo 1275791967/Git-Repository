@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.CustomerbehaviorMapper">
+
+  <select id="load" parameterType="Integer" resultMap="customerbehaviorResult">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM customerbehavior
+        WHERE 
+            ID = #{id} 
+    </select>
+     <select id="findAll" resultMap="customerbehaviorResult">
+     
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM customerbehavior
+    </select>
+    
+     
+    <select id="countAll" resultType="Integer">
+        SELECT count(0) as c FROM customerbehavior
+    </select>
+    
+    <select id="queryByLikeName" parameterType="com.irongteng.persistence.beans.Customerbehavior" resultMap="customerbehaviorResult">
+        select 
+            <include refid="Base_Column_List" />
+        from customerbehavior
+        where  1=1
+            <if test="id!=null">
+            AND id=#{id}
+            </if>
+            <if test="name!=null">
+          AND name LIKE CONCAT("%", #{name}, "%")
+            </if>
+    </select>
+    <sql id="Map_Column_List">
+        ID, Name
+    </sql>
+    <sql id="Base_Column_List">
+        ID, Name,Description,Remark
+    </sql>
+<sql id="INT_UP_Column_List">
+        Name,Description,Remark
+    </sql>
+<insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO customerbehavior (
+            <include refid="INT_UP_Column_List" />
+        ) VALUES (
+            #{name},                 
+            #{description},        
+            #{remark}
+        )
+    </insert>
+        <insert id="addBatch" parameterType="java.util.List">
+        insert into customerbehavior(
+            <include refid="INT_UP_Column_List" />
+        )
+        values  
+        <foreach item="item" index="index" collection="list" separator=",">
+            (         
+            #{item.name},
+            #{item.description},
+            #{item.remark}
+            )
+        </foreach>  
+    </insert>
+    
+    <update id="addOrUpdate"  parameterType="Customerbehavior"> 
+        INSERT into customerbehavior(<include refid="INT_UP_Column_List" />)  
+        values( 
+             #{name},                 
+            #{description},          
+            #{remark}
+        )
+        ON DUPLICATE KEY UPDATE name=#{name}
+    </update>
+    <delete id="delete" parameterType="Integer">
+        DELETE FROM customerbehavior where ID=#{id}
+    </delete>
+    
+  <update id="update" parameterType="Customerbehavior">
+        UPDATE customerbehavior SET            
+            name=#{name},                 
+            description=#{description},        
+            remark=#{remark}
+        where 
+            ID = #{id}
+    </update>
+
+    <update id="updateSelective" parameterType="Customerbehavior">
+        UPDATE customerbehavior 
+        <set>
+            <if test="name!=null">
+            name=#{name},
+            </if>
+            <if test="description!=null">
+            description=#{description},
+            </if>
+            <if test="remark!=null">
+            remark=#{remark}
+            </if>
+        </set>
+        WHERE
+            ID = #{id}
+    </update>
+   <update id="updateBatchSelective" parameterType="java.util.List">
+        <foreach item="item" collection="list" index="index" open=""
+            close="" separator=";">
+            
+            update customerbehavior
+            <set>
+                <if test="item.name!=null">
+                    name=#{item.name},
+                </if>
+                
+                <if test="item.description!=null">
+                    Description=#{item.description},
+                </if>
+                 <if test="item.remark!=null">
+                    Remark=#{item.remark},
+                </if>
+               
+            </set>
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <choose>
+                    <when test="item.id!=null">
+                        AND ID=#{item.id}
+                    </when>
+                    <otherwise>
+                        
+                                AND ID = 0
+                        
+                    </otherwise>
+                </choose>
+            </trim>
+        </foreach>
+    </update>
+
+ 
+    <!-- 批量删除 -->
+    <delete id="deleteBatchByname" parameterType="java.util.List">
+        DELETE FROM customerbehavior WHERE
+        id in
+        <foreach collection="list" item = "item" open="(" separator="," close=")">
+        #{item}  
+        </foreach>
+    </delete>
+    <resultMap id="customerbehaviorResult" type="Customerbehavior">
+        <id property="id" jdbcType="INTEGER" column="Id" />
+        <result property="name" jdbcType="VARCHAR" column="name"/>
+        <result property="description" jdbcType="VARCHAR" column="description"/>
+        <result property="remark" jdbcType="VARCHAR" column="remark"/>
+    </resultMap>
+    </mapper> 

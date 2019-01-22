@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.AlongAnalysisMapper">
+    
+    <cache />
+    
+    <!-- 伴随分析 -->
+    
+    <resultMap id="alongAnalysisResult" type="AlongAnalysis">
+        <id property="id" jdbcType="BIGINT" column="ID" />
+        <result property="type" jdbcType="INTEGER" column="Type" />
+        <result property="content" jdbcType="VARCHAR" column="Content" />
+        <result property="assoContent" jdbcType="VARCHAR" column="AssoContent" />
+        <result property="monitorID" jdbcType="INTEGER" column="MonitorID"/>
+        <result property="monitorName" jdbcType="VARCHAR" column="MonitorName" />
+        <result property="startTime" jdbcType="TIMESTAMP" column="StartTime" />
+        <result property="endTime" jdbcType="TIMESTAMP" column="EndTime" />
+        <result property="totalCount" jdbcType="INTEGER" column="TotalCount" />
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        max(c.ID) as ID, c.Content, c.AssoContent, min(c.StartTime) as StartTime, max(c.EndTime) as EndTime, sum(c.TotalCount) as TotalCount, m.Name as MonitorName, m.ID as MonitorID
+    </sql>
+    
+    <sql id="Mac_Column_List">
+        max(v.ID) as ID, v.User_MAC as Content, NULL as AssoContent, count(0) as TotalCount, min(v.StartTime) as StartTime, max(v.StartTime) as EndTime 
+    </sql>
+    
+    <sql id="IMSI_Column_List">
+        max(v.ID) as ID, v.User_IMSI as Content, v.User_IMEI as AssoContent, count(0) as TotalCount, min(v.RecordTime) as StartTime, max(v.RecordTime) as EndTime 
+    </sql>
+    
+    <sql id="IMEI_Column_List">
+        max(v.ID) as ID, v.User_IMEI as Content, v.User_IMSI as AssoContent, count(0) as TotalCount, min(v.RecordTime) as StartTime, max(v.RecordTime) as EndTime 
+    </sql>
+    
+    <!-- 伴随分析分页-->
+    <select id="findPageBreakByCondition" parameterType="map" resultMap="alongAnalysisResult">
+        select 
+            <include refid="Base_Column_List" /> 
+        from (
+        <choose>
+            <when test="type !=null and type == 1">
+                <foreach item="item" index="index" collection="deviceVoList" separator="union">
+                    select  
+                        <include refid="Mac_Column_List" /> 
+                    from visit_log v 
+                        inner join device d on d.ID = v.DeviceID 
+                        inner join t_site s on s.ID = d.siteID
+                    where s.ID = #{item.siteID} 
+                        and v.StartTime &gt;= #{item.startDate} 
+                        and v.StartTime &lt;= #{item.endDate}
+                        and v.User_MAC != #{content}
+                    group by v.User_MAC
+                </foreach>
+                ) c
+                    left join monitor m on m.MAC = c.Content 
+            </when>
+            <when test="type !=null and type == 2">
+                <foreach item="item" index="index" collection="deviceVoList" separator="union">
+                    select  
+                        <include refid="IMSI_Column_List" /> 
+                    from hpl_log v 
+                        inner join device d on d.ID = v.DeviceID 
+                        inner join t_site s on s.ID = d.siteID
+                    where s.ID = #{item.siteID} 
+                        and v.RecordTime &gt;= #{item.startDate} 
+                        and v.RecordTime &lt;= #{item.endDate}
+                        and v.User_IMSI != #{content}
+                    group by v.User_IMSI
+                </foreach>
+                ) c
+                    left join monitor m on m.IMSI = c.Content 
+            </when>
+            <when test="type !=null and type == 3">
+                <foreach item="item" index="index" collection="deviceVoList" separator="union">
+                    select 
+                        <include refid="IMEI_Column_List" /> 
+                    from hpl_log v 
+                        inner join device d on d.ID = v.DeviceID 
+                        inner join t_site s on s.ID = d.siteID
+                    where s.ID = #{item.siteID} 
+                        and v.RecordTime &gt;= #{item.startDate} 
+                        and v.RecordTime &lt;= #{item.endDate}
+                        and v.User_IMEI != #{content}
+                    group by v.User_IMEI
+                </foreach>
+                ) c
+                    left join monitor m on m.IMEI = c.Content 
+            </when>
+        </choose>
+        group by c.Content
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                 ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                 order by TotalCount desc
+            </otherwise>
+        </choose>
+    </select>
+    
+     <!-- 伴随分析总页数 -->
+    <select id="findNumberByCondition" resultType="Integer" parameterType="map">
+        select count(0) as c from (
+        <choose>
+            <when test="type !=null and type == 1">
+                <foreach item="item" index="index" collection="deviceVoList" separator="union">
+                    select v.User_MAC as Content from visit_log v 
+                        inner join device d on d.ID = v.DeviceID 
+                        inner join t_site s on s.ID = d.siteID 
+                    where s.ID = #{item.siteID} 
+                        and v.StartTime &gt;= #{item.startDate} 
+                        and v.StartTime &lt;= #{item.endDate} 
+                        and v.User_MAC != #{content}
+                    group by v.User_MAC
+                </foreach>
+            </when>
+            <when test="type !=null and type == 2">
+                <foreach item="item" index="index" collection="deviceVoList" separator="union">
+                    select v.User_IMSI as Content from hpl_log v 
+                        inner join device d on d.ID = v.DeviceID 
+                        inner join t_site s on s.ID = d.siteID 
+                    where s.ID = #{item.siteID} 
+                        and v.RecordTime &gt;= #{item.startDate} 
+                        and v.RecordTime &lt;= #{item.endDate}
+                        and v.User_IMSI != #{content}
+                    group by v.User_IMSI
+                </foreach>
+            </when>
+            <when test="type !=null and type == 3">
+                <foreach item="item" index="index" collection="deviceVoList" separator="union">
+                    select v.User_IMEI as Content from hpl_log v 
+                        inner join device d on d.ID = v.DeviceID 
+                        inner join t_site s on s.ID = d.siteID 
+                    where s.ID = #{item.siteID} 
+                        and v.RecordTime &gt;= #{item.startDate} 
+                        and v.RecordTime &lt;= #{item.endDate}
+                        and v.User_IMEI != #{content}
+                    group by v.User_IMEI
+                </foreach>
+            </when>
+        </choose>
+        ) a
+    </select>
+    
+</mapper>

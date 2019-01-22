@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.irongteng.persistence.mapper.TranstFlowMapper">
+
+	<resultMap id="transtFlowResult" type="TranstFlow">
+		<result property="id" jdbcType="INTEGER" column="ID" />
+		<result property="logTypeID" jdbcType="INTEGER" column="LogTypeID" />
+		<result property="content" jdbcType="VARCHAR" column="Content" />
+		<result property="channelType" jdbcType="VARCHAR" column="ChannelType" />
+		<result property="imsi" jdbcType="VARCHAR" column="Imsi" />
+		<result property="imei" jdbcType="VARCHAR" column="Imei" />
+		<result property="phone" jdbcType="VARCHAR" column="Phone" />
+		<result property="recordTime" jdbcType="TIMESTAMP" column="RecordTime" />
+		<result property="remark" jdbcType="VARCHAR" column="Remark" />
+		<association property="fromDevice" javaType="Device"
+			column="FromDeviceID" resultMap="fromDeviceResult" />
+		<association property="toDevice" javaType="Device" column="ToDeviceID"
+			resultMap="toDeviceResult" />
+	</resultMap>
+
+	<resultMap id="fromDeviceResult" type="Device">
+		<result property="id" jdbcType="INTEGER" column="FromDeviceID" />
+		<result property="customerID" jdbcType="INTEGER" column="CustomerID" />
+		<result property="deviceName" jdbcType="VARCHAR" column="FromDeviceName" />
+		<result property="deviceIP" jdbcType="VARCHAR" column="DeviceIP" />
+		<result property="deviceType" jdbcType="INTEGER" column="DeviceType" />
+		<result property="featureCode" jdbcType="VARCHAR" column="FeatureCode" />
+		<result property="address" jdbcType="VARCHAR" column="Address" />
+		<result property="areaLocation" jdbcType="VARCHAR" column="AreaLocation" />
+		<result property="longitude" jdbcType="VARCHAR" column="Longitude" />
+		<result property="latitude" jdbcType="VARCHAR" column="Latitude" />
+		<result property="createTime" jdbcType="TIMESTAMP" column="CreateTime" />
+		<result property="remark" jdbcType="VARCHAR" column="Remark" />
+	</resultMap>
+
+	<resultMap id="toDeviceResult" type="Device">
+		<result property="id" jdbcType="INTEGER" column="ToDeviceID" />
+		<result property="customerID" jdbcType="INTEGER" column="CustomerID" />
+		<result property="deviceName" jdbcType="VARCHAR" column="ToDeviceName" />
+		<result property="deviceIP" jdbcType="VARCHAR" column="DeviceIP" />
+		<result property="deviceType" jdbcType="INTEGER" column="DeviceType" />
+		<result property="featureCode" jdbcType="VARCHAR" column="FeatureCode" />
+		<result property="address" jdbcType="VARCHAR" column="Address" />
+		<result property="areaLocation" jdbcType="VARCHAR" column="AreaLocation" />
+		<result property="longitude" jdbcType="VARCHAR" column="Longitude" />
+		<result property="latitude" jdbcType="VARCHAR" column="Latitude" />
+		<result property="createTime" jdbcType="TIMESTAMP" column="CreateTime" />
+		<result property="remark" jdbcType="VARCHAR" column="Remark" />
+	</resultMap>
+
+	<sql id="Insert_Column_List">
+		logTypeID,fromDeviceID,toDeviceID,content,channelType,imsi,imei,phone,recordTime,remark
+	</sql>
+	<sql id="Base_Column_List">
+		td.ID,
+		td.logTypeID,
+		td.fromDeviceID,
+		td.toDeviceID,
+		dd.DeviceName as fromDeviceName,
+		tdd.DeviceName as toDeviceName,
+		td.content,
+		td.channelType,
+		td.imsi,
+		td.imei,
+		td.phone,
+		td.imsi,
+		td.recordTime,
+		td.Remark,
+		dd.ID as FromDeviceID,
+		dd.customerID,
+		dd.deviceIP,
+		dd.areaLocation,
+		dd.deviceType,
+		dd.featureCode,
+		dd.address,
+		dd.longitude,
+		dd.latitude,
+		dd.createTime,
+		dd.remark as fromRemark,
+		tdd.ID as ToDeviceID,
+		tdd.customerID as toCustomerID,
+		tdd.deviceIP as toDeviceIP,
+		tdd.areaLocation as toAreaLocation,
+		tdd.deviceType as toDeviceType,
+		tdd.featureCode as toFeatureCode,
+		tdd.address as toAddress,
+		tdd.longitude as toLongitude,
+		tdd.latitude as toLatitude,
+		tdd.createTime as toCreateTime,
+		tdd.remark as toRemark
+	</sql>
+
+	<sql id="Base_Table_List">
+		t_transt_flow td
+		inner join t_device dd on td.fromDeviceID = dd.ID
+		inner join t_device tdd on td.toDeviceID = tdd.ID
+	</sql>
+
+	<sql id="Base_Query_List">
+		SELECT
+		<include refid="Base_Column_List" />
+		FROM
+		<include refid="Base_Table_List" />
+	</sql>
+
+	<sql id="Base_Count_List">
+		select count(0) as c from
+		<include refid="Base_Table_List" />
+	</sql>
+
+	<sql id="Base_Where_Condition">
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+			<if test="logTypeID != null">
+				AND td.LogTypeID = #{logTypeID}
+			</if>
+			<if test="fromDeviceName != null">
+				AND dd.DeviceName = #{fromDeviceName}
+			</if>
+			<if test="toDeviceName != null">
+				AND tdd.DeviceName = #{toDeviceName}
+			</if>
+			<if test="fromDeviceID != null">
+				AND td.FromDeviceID = #{fromDeviceID}
+			</if>
+			<if test="toDeviceID != null">
+				AND td.ToDeviceID = #{toDeviceID}
+			</if>
+			<if test="content != null">
+				AND td.Content = #{content}
+			</if>
+			<if test="channelType != null">
+				AND td.ChannelType = #{channelType}
+			</if>
+			<if test="customerID != null">
+				AND dd.CustomerID = #{customerID}
+			</if>
+			<if test="deviceIP != null">
+				AND dd.DeviceIP = #{deviceIP}
+			</if>
+			<if test="areaLocation != null">
+				AND dd.AreaLocation = #{areaLocation}
+			</if>
+			<if test="deviceType != null">
+				AND dd.DeviceType = #{deviceType}
+			</if>
+			<if test="featureCode != null">
+				AND dd.FeatureCode = #{featureCode}
+			</if>
+			<if test="address != null">
+				AND dd.Address = #{address}
+			</if>
+			<if test="longitude != null">
+				AND dd.Longitude = #{longitude}
+			</if>
+			<if test="latitude != null">
+				AND dd.Latitude = #{latitude}
+			</if>
+			<if test="customerID != null">
+				AND tdd.CustomerID = #{customerID}
+			</if>
+			<if test="deviceIP != null">
+				AND tdd.DeviceIP = #{deviceIP}
+			</if>
+			<if test="areaLocation != null">
+				AND tdd.AreaLocation = #{areaLocation}
+			</if>
+			<if test="deviceType != null">
+				AND tdd.DeviceType = #{deviceType}
+			</if>
+			<if test="featureCode != null">
+				AND tdd.FeatureCode = #{featureCode}
+			</if>
+			<if test="address != null">
+				AND tdd.Address = #{address}
+			</if>
+			<if test="longitude != null">
+				AND tdd.Longitude = #{longitude}
+			</if>
+			<if test="latitude != null">
+				AND tdd.Latitude = #{latitude}
+			</if>
+			 <if test="startDate != null">
+                AND td.RecordTime &gt;= #{startDate} 
+            </if>
+                <if test="endDate != null">
+                AND td.RecordTime &lt;= #{endDate} 
+            </if>
+			
+			<if test="keywords != null">
+				AND (
+				td.imsi LIKE "%"#{keywords}"%"
+				or td.imei LIKE "%"#{keywords}"%"
+				or td.phone LIKE "%"#{keywords}"%"
+				)
+			</if>
+		</trim>
+	</sql>
+
+	<sql id="Base_Order_By">
+		order by td.id
+	</sql>
+	
+	<sql id="Base_Page_Condition">
+		<choose>
+			<when test="orderField !=null and orderField !=''">
+				ORDER BY ${orderField}
+				<if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+			</when>
+			<otherwise>
+				<include refid="Base_Order_By" />
+			</otherwise>
+		</choose>
+	</sql>
+
+	<select id="load" parameterType="Integer" resultMap="transtFlowResult">
+		<include refid="Base_Query_List" />
+		WHERE td.ID = #{id}
+	</select>
+
+	<select id="getLastByImsi" resultMap="transtFlowResult"
+		parameterType="map">
+		SELECT
+		ID,
+		logTypeID,
+		fromDeviceID,
+		toDeviceID,
+		content,
+		channelType,
+		imsi,
+		imei,
+		phone,
+		imsi,
+		recordTime,
+		Remark
+		<!--<include refid="Base_Column_List" /> -->
+		FROM t_transt_flow
+		WHERE
+		imsi = #{imsi} and logTypeID = 1 order by recordTime DESC
+	</select>
+
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id"
+		parameterType="TranstFlow">
+		INSERT INTO t_transt_flow (
+		<include refid="Insert_Column_List" />
+		) VALUES (
+		#{logTypeID},
+		#{fromDevice.id},
+		#{toDevice.id},
+		#{content},
+		#{channelType},
+		#{imsi},
+		#{imei},
+		#{phone},
+		#{recordTime},
+		#{remark}
+		)
+	</insert>
+
+	<update id="update" parameterType="TranstFlow">
+		UPDATE t_transt_flow
+		SET
+		LogTypeID = #{logTypeID},
+		FromDeviceID = #{fromDevice.id},
+		ToDeviceID = #{toDevice.id},
+		Content = #{content},
+		ChannelType = #{channelType},
+		Imsi = #{imsi},
+		Imei = #{imei},
+		Phone = #{phone},
+		RecordTime = #{recordTime},
+		Remark = #{remark}
+		WHERE
+		ID = #{id}
+	</update>
+
+	<!-- 选择更新 -->
+	<update id="updateSelective" parameterType="TranstFlow">
+		UPDATE t_transt_flow
+		<set>
+			<if test="logTypeID!=null">
+				LogTypeID = #{logTypeID},
+			</if>
+			<if test="fromDevice!=null and fromDevice.id!=null">
+				FromDeviceID = #{fromDevice.id},
+			</if>
+			<if test="toDevice!=null and toDevice.id!=null">
+				ToDeviceID = #{toDevice.id},
+			</if>
+			<if test="content!=null">
+				Content = #{content},
+			</if>
+			<if test="channelType!=null">
+				ChannelType = #{channelType},
+			</if>
+			<if test="imsi!=null">
+				Imsi = #{imsi},
+			</if>
+			<if test="imei!=null">
+				Imei = #{imei},
+			</if>
+			<if test="phone!=null">
+				Phone = #{phone},
+			</if>
+			<if test="recordTime!=null">
+				RecordTime = #{recordTime},
+			</if>
+			<if test="remark!=null">
+				Remark = #{remark}
+			</if>
+		</set>
+		WHERE
+		ID = #{id}
+	</update>
+
+	<!-- 批量插入 -->
+	<insert id="insertBatch" parameterType="java.util.List">
+		INSERT INTO t_transt_flow (
+		<include refid="Insert_Column_List" />
+		) VALUES
+		<foreach item="item" index="index" collection="list"
+			separator=",">
+			(
+			#{item.logTypeID},
+			#{item.fromDevice.id},
+			#{item.toDevice.id},
+			#{item.content},
+			#{item.channelType},
+			#{item.imsi},
+			#{item.imei},
+			#{item.phone},
+			#{item.recordTime},
+			#{item.remark}
+			)
+		</foreach>
+	</insert>
+
+	<delete id="delete" parameterType="Integer">
+		DELETE FROM t_transt_flow where ID=#{id}
+	</delete>
+
+	<!-- 批量更新 -->
+	<update id="updateBatchSelective" parameterType="java.util.List">
+		<foreach item="item" collection="list" index="index" open=""
+			close="" separator=";">
+			UPDATE t_transt_flow
+			SET
+			LogTypeID = #{item.logTypeID},
+			FromDeviceID = #{item.fromDevice.id},
+			ToDeviceID = #{item.toDevice.id},
+			Content = #{item.content},
+			ChannelType = #{item.channelType},
+			Imsi = #{item.imsi},
+			Imei = #{item.imei},
+			Phone = #{item.phone},
+			RecordTime = #{item.recordTime},
+			Remark = #{item.remark},
+			WHERE
+			ID = #{item.id}
+		</foreach>
+	</update>
+
+	<select id="findByCondition" resultMap="transtFlowResult"
+		parameterType="map">
+		<include refid="Base_Query_List" />
+		<include refid="Base_Where_Condition" />
+		<include refid="Base_Page_Condition" />
+	</select>
+
+	<select id="findPageBreakByCondition" resultMap="transtFlowResult"
+		parameterType="map">
+		<include refid="Base_Query_List" />
+		<include refid="Base_Where_Condition" />
+		<include refid="Base_Page_Condition" />
+	</select>
+
+	<select id="findNumberByCondition" resultType="Integer"
+		parameterType="map">
+		<include refid="Base_Count_List" />
+		<include refid="Base_Where_Condition" />
+	</select>
+
+	<!-- <select id="analyzeTranslateResult" resultType="map" parameterType="Integer"> 
+		select sum(cmccChannels) as sumCmccChannels, sum(cmccNarmalChannels) as sumCmccNarmalChannels 
+		,sum(cmccWaitTranslates) as sumCmccWaitTranslates , sum(unicomChannels)as 
+		sumUnicomChannelsfrom ,sum(unicomWaitTranslates)as sumUnicomWaitTranslates 
+		,sum(cdmaChannels)as sumCdmaChannels ,sum(unicomNarmalChannels)as sumUnicomNarmalChannels 
+		,sum(cdmaNarmalChannels)as sumCdmaNarmalChannels ,sum(cdmaWaitTranslates)as 
+		sumCdmaWaitTranslates from t_loadinfo where DeviceID=#{deviceID} </select> -->
+
+	<select id="getCancelTranslateList" resultMap="transtFlowResult"
+		parameterType="map">
+		select
+		ID,
+		logTypeID,
+		fromDeviceID,
+		toDeviceID,
+		content,
+		channelType,
+		imsi,
+		imei,
+		phone,
+		imsi,
+		recordTime,
+		Remark
+		<!-- <include refid="Base_Column_List" /> -->
+		from t_transt_flow where fromDeviceID = #{deviceID}
+		and toDeviceID != 1 and logTypeID = 1 and imsi not in
+		(select imsi from t_transt_flow where toDeviceID = #{deviceID} and logTypeID
+		= 2) order by recordTime desc ;
+	</select>
+
+</mapper>

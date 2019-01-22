@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.DeviceAlarmMapper">
+    
+    <cache />
+    
+    <resultMap id="siteResult" type="Site">
+        <result property="id" jdbcType="INTEGER" column="SiteID"/>
+        <result property="siteName" jdbcType="VARCHAR" column="SiteName" />
+    </resultMap>
+    <!-- 设备信息表 -->
+    <resultMap id="deviceResult" type="Device">
+        <id property="id" jdbcType="INTEGER" column="DeviceID" />
+        <result property="deviceName" jdbcType="VARCHAR" column="DeviceName" />
+        <result property="siteNumber" jdbcType="VARCHAR" column="SiteNumber" />
+        <association property="category" javaType="Category" column="CategoryID" resultMap="categoryResult" />
+        <association property="site" javaType="Site" column="SiteID" resultMap="siteResult" />
+    </resultMap>
+    <!-- 所有参数表 -->
+    <resultMap id="parameterResult" type="Parameter">
+        <id property="id" jdbcType="INTEGER" column="ParameterID" />
+        <result property="identifier" jdbcType="VARCHAR" column="Identifier" />
+        <result property="paramName" jdbcType="VARCHAR" column="ParamName" />
+    </resultMap>
+    
+    <resultMap id="categoryResult" type="Category">
+        <id property="id" jdbcType="INTEGER" column="CategoryID" />
+        <result property="categoryName" jdbcType="VARCHAR" column="CategoryName" />
+        <result property="protocolID" jdbcType="INTEGER" column="protocolID" />
+        <result property="remark" jdbcType="VARCHAR" column="Remark" />
+    </resultMap>
+    
+    <resultMap id="categoryParameterResult" type="CategoryParameter">
+        <id property="id" jdbcType="INTEGER" column="CategoryParameterID" />
+        <association property="parameter" javaType="Parameter" column="Identifier" resultMap="parameterResult" />
+        <association property="category" javaType="Category" column="CategoryID" resultMap="categoryResult" />
+    </resultMap>
+    
+    <resultMap id="deviceAlarmResult" type="DeviceAlarm">
+        <id property="id" jdbcType="INTEGER" column="ID" />
+        <result property="value" jdbcType="VARCHAR" column="Value" />
+        <result property="alarmTime" jdbcType="TIMESTAMP" column="AlarmTime" />
+        <result property="restoreTime" jdbcType="TIMESTAMP" column="RestoreTime" />
+        <association property="device" javaType="Device" column="DeviceID" resultMap="deviceResult" />
+        <association property="categoryParameter" javaType="CategoryParameter" column="CategoryParameterID" resultMap="categoryParameterResult" />
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        pv.ID, d.SiteID, s.SiteName, pv.DeviceID, d.DeviceName, d.SiteNumber, d.CategoryID, c.CategoryName, pv.AlarmTime, pv.RestoreTime, p.Identifier, p.ParamName
+    </sql>
+    
+    <select id="load" parameterType="Integer" resultMap="deviceAlarmResult">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM t_device_alarm pv
+            inner join device d on pv.DeviceID = d.ID
+            left join t_site s on s.ID = d.siteID 
+            inner join categoryparameter cp on cp.CategoryID = d.CategoryID and cp.Identifier=pv.Identifier
+            inner join category c on cp.CategoryID=c.ID
+            inner join parameter p on p.Identifier=cp.Identifier
+        WHERE 
+            pv.ID = #{id} 
+    </select>
+    
+    <!-- 插入 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="DeviceAlarm">
+        INSERT INTO t_device_alarm (
+            DeviceID,
+            Identifier,
+            alarmTime,
+            restoreTime
+        ) VALUES (
+            #{device.id},
+            #{categoryParameter.parameter.identifier},
+            #{alarmTime},
+            #{restoreTime}
+        )
+    </insert>
+    <!-- 判断告警参数是否存在 -->
+    <select id="hasActiveAlarm" parameterType="map" resultType="Integer">
+        select count(0) as c
+        from t_device_alarm 
+        where DeviceID != #{deviceID} and Identifier = #{identifier}
+    </select>
+    
+    <!-- 批量插入 -->
+    <insert id="addBatch" parameterType="java.util.List">
+        insert into t_device_alarm(
+           DeviceID,
+           Identifier,
+           alarmTime,
+           restoreTime
+        )
+        values  
+        <foreach item="item" index="index" collection="list" separator=",">
+        (
+            #{item.device.id},
+            #{item.categoryParameter.parameter.identifier},
+            #{item.alarmTime},
+            #{item.restoreTime}
+        )
+        </foreach>  
+    </insert>
+    
+    <!-- 更新 -->
+    <update id="updateSelective" parameterType="DeviceAlarm">
+        UPDATE t_device_alarm 
+        <set>
+            <if test="device!=null and device.id!=null">
+            DeviceID = #{device.id},
+            </if>
+            <if test="categoryParameter!=null and categoryParameter.parameter!=null and categoryParameter.parameter.identifier!=null">
+            Identifier = #{categoryParameter.parameter.identifier},
+            </if>
+            <if test="alarmTime!=null">
+            AlarmTime = #{alarmTime},
+            </if>
+            <if test="restoreTime!=null">
+            RestoreTime = #{restoreTime},
+            </if>           
+        </set>
+        WHERE 
+            ID = #{id}
+    </update>
+    
+    <update id="update" parameterType="DeviceAlarm">
+        UPDATE t_device_alarm 
+        SET
+            DeviceID = #{device.id},
+            Identifier = #{categoryParameter.parameter.identifier},
+            AlarmTime = #{alarmTime},
+            RestoreTime = #{restoreTime}
+        WHERE 
+            ID = #{id} 
+    </update>
+    
+    <!-- 按条件批量更新 -->
+    <update id="updateBatchSelective" parameterType="java.util.List">
+        <foreach item="item" collection="list" index="index" open="" close="" separator=";">
+            update t_device_alarm pv, categoryparameter cp, device d 
+            <set>
+                <if test="item.alarmTime!=null">
+                pv.AlarmTime=#{item.alarmTime},
+                </if>
+                <if test="item.restoreTime!=null">
+                pv.RestoreTime=#{item.restoreTime},
+                </if>
+            </set>
+            where pv.DeviceID = d.ID and isnull(pv.RestoreTime) 
+                and cp.CategoryID = d.CategoryID 
+                and cp.Identifier=pv.Identifier
+            <choose>
+                <when test="item.categoryParameter!=null and item.categoryParameter.parameter!=null and item.device!=null">
+                    <if test="item.categoryParameter.parameter.id !=null">
+                        and cp.ID=#{item.categoryParameter.parameter.id}
+                    </if>
+                    <if test="item.categoryParameter.parameter.identifier !=null">
+                        and cp.Identifier=#{item.categoryParameter.parameter.identifier}
+                    </if>
+                    <if test="item.device.id !=null">
+                          and d.ID=#{item.device.id}
+                    </if>
+                    <if test="item.device.siteNumber != null">
+                        and d.SiteNumber=#{item.device.siteNumber}
+                    </if>
+                    <if test="item.device.deviceNumber !=null">
+                        and d.DeviceNumber=#{item.device.deviceNumber}
+                    </if>
+                    <if test="item.device.attachNumber !=null">
+                        and d.AttachNumber=#{item.device.attachNumber}
+                    </if>
+                </when>
+                <otherwise>
+                    <choose>
+                        <when test="item.id != null">
+                            and pv.ID = #{item.id}
+                        </when>
+                        <otherwise>
+                            and pv.ID = 0
+                        </otherwise>
+                    </choose>
+                </otherwise>
+            </choose>
+          </foreach>
+    </update>
+    
+    <!-- 按Id删除 -->
+    <delete id="delete" parameterType="Integer">
+        DELETE FROM t_device_alarm WHERE ID = #{id}
+    </delete>
+    
+    <!-- 按设备编号或属性编号可选择删除 -->
+    <delete id="deleteSelective" parameterType="ParameterValue">
+        DELETE FROM t_device_alarm 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="id !=null">
+                and ID = #{id}
+            </if>
+            <if test="categoryParameter!=null and categoryParameter.parameter!=null and categoryParameter.parameter.id!=null">
+                and CategoryParameterID = #{id}
+            </if>
+            <!-- 根据设备ID删除 -->
+            <if test="device!=null and device.id!=null">
+                and DeviceID=#{device.id}
+            </if>
+            
+            <!-- 根据设备编号或者属性编号删除 -->
+            <choose>
+                <when test="device!=null and (device.deviceNumber !=null or device.attachNumber !=null)">
+                    and DeviceID in (select d.ID from device d
+                    <trim prefix="WHERE" prefixOverrides="AND|OR">
+                        <if test="device.deviceNumber!=null">
+                            and d.DeviceNumber=#{device.deviceNumber}
+                        </if>
+                        <if test="device.attachNumber!=null">
+                            and d.AttachNumber=#{device.attachNumber}
+                        </if>
+                    </trim>
+                    )
+                </when>
+            </choose>
+            <!-- 根据参数ID参数 -->
+            <if test="categoryParameter!=null and categoryParameter.parameter!=null and categoryParameter.parameter.identifier!=null">
+                and CategoryParameterID in (select cp.ID from categoryParameter cp 
+                    WHERE cp.Identifier=#{categoryParameter.parameter.identifier}
+                )
+            </if>
+            <!-- 根据设备类型删除 -->
+            <if test="categoryParameter!=null and categoryParameter.category!=null and categoryParameter.category.id!=null">
+                and CategoryParameterID in (
+                    select cp.ID 
+                    from categoryParameter cp 
+                        inner join category c on cp.CategoryID=c.ID
+                    WHERE c.Identifier=#{categoryParameter.category.id}
+                )
+            </if>
+            
+          </trim>
+    </delete>
+    
+    <!-- 批量删除 -->
+    <delete id="deleteBatch" parameterType="java.util.List">
+        DELETE FROM t_device_alarm WHERE
+        ID in
+        <foreach collection="list" item = "item" open="(" separator="," close=")">
+        #{item}  
+        </foreach>
+    </delete>
+    
+    <!-- 指定页查询 -->
+    <select id="findPageBreakByCondition" resultMap="deviceAlarmResult" parameterType="map">
+        SELECT 
+            <include refid="Base_Column_List" />
+        from t_device_alarm pv
+            inner join device d on pv.DeviceID = d.ID
+            left join t_site s on s.ID = d.siteID 
+            inner join categoryparameter cp on cp.CategoryID = d.CategoryID and cp.Identifier=pv.Identifier
+            inner join category c on cp.CategoryID=c.ID
+            inner join parameter p on p.Identifier=cp.Identifier
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="siteID != null">
+                AND s.ID in (#{siteID})
+            </if>
+            <if test="deviceID != null">
+                AND d.ID in (#{deviceID})
+            </if>
+            <if test="status != null">
+                AND d.ID in (#{status}) 
+            </if>
+            <if test="type != null">
+                <choose>
+                    <when test="type==1">
+                        AND not isNull(pv.AlarmTime) 
+                        AND isNull(pv.RestoreTime)
+                    </when>
+                    <when test="type==2">
+                        AND not isNull(pv.AlarmTime) 
+                        AND not isNull(pv.RestoreTime)
+                    </when>
+                </choose>
+            </if>
+            <if test="startDate != null">
+                AND pv.alarmTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND pv.alarmTime &lt;= #{endDate} 
+            </if>
+            <if test="keywords != null">
+                AND (
+                    p.Identifier LIKE "%"#{keywords}"%"
+                    or p.ParamName LIKE "%"#{keywords}"%"
+                )
+            </if>
+        </trim>
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                order by pv.ID desc
+            </otherwise>
+        </choose>   
+    </select>
+    
+    <!-- 指定页查询总条数 -->
+    <select id="findNumberByCondition" resultType="Integer" parameterType="map">
+        select count(0) as c 
+        from t_device_alarm pv
+            inner join device d on pv.DeviceID = d.ID
+            left join t_site s on s.ID = d.siteID 
+            inner join categoryparameter cp on cp.CategoryID = d.CategoryID and cp.Identifier=pv.Identifier
+            inner join category c on cp.CategoryID=c.ID
+            inner join parameter p on p.Identifier=cp.Identifier
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="siteID != null">
+                AND s.ID in (#{siteID})
+            </if>
+            <if test="deviceID != null">
+                AND d.ID in (#{deviceID})
+            </if>
+            <if test="status != null">
+                AND d.ID in (#{status}) 
+            </if>
+            <if test="type != null">
+                <choose>
+                    <when test="type==1">
+                        AND not isNull(pv.AlarmTime) 
+                        AND isNull(pv.RestoreTime)
+                    </when>
+                    <when test="type==2">
+                        AND not isNull(pv.AlarmTime) 
+                        AND not isNull(pv.RestoreTime)
+                    </when>
+                </choose>
+            </if>
+            <if test="startDate != null">
+                AND pv.alarmTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND pv.alarmTime &lt;= #{endDate} 
+            </if>
+            <if test="keywords != null">
+                AND (
+                    p.Identifier LIKE "%"#{keywords}"%"
+                    or p.ParamName LIKE "%"#{keywords}"%"
+                )
+            </if>
+        </trim>
+    </select>
+</mapper>

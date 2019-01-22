@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.HplLogMapper">
+    
+    <cache />
+    
+    <resultMap type="HplLog" id="hplLogResult">
+        <id property="id" jdbcType="BIGINT" column="ID" />
+        <result property="recordTime" jdbcType="TIMESTAMP" column="RecordTime" />
+        <result property="commOperator" jdbcType="INTEGER" column="CommOperator" />
+        <result property="userIMSI" jdbcType="VARCHAR" column="User_IMSI" />
+        <result property="userIMEI" jdbcType="VARCHAR" column="User_IMEI" />
+        <result property="rssi" jdbcType="VARCHAR" column="RSSI" />
+        <result property="lac" jdbcType="VARCHAR" column="LAC" />
+        <result property="tmsi" jdbcType="VARCHAR" column="TMSI" />
+        <association property="device" javaType="Device" column="DeviceID" resultMap="deviceResult" />
+        <!-- <association property="monitor" javaType="Monitor" column="User_IMEI" resultMap="monitorResult" />-->
+    </resultMap>
+    <!--    
+    <resultMap id="monitorResult" type="Monitor">
+        <id property="id" jdbcType="INTEGER" column="MonitorID"/>
+        <result property="name" jdbcType="VARCHAR" column="MonitorName" />
+        <result property="mac" jdbcType="VARCHAR" column="User_MAC" />
+        <result property="imei" jdbcType="VARCHAR" column="User_IMEI" />
+        <result property="imsi" jdbcType="VARCHAR" column="User_IMSI" />
+        <result property="remark" jdbcType="VARCHAR" column="Remark" />
+    </resultMap>
+    -->
+    <!-- 设备信息表 -->
+    <resultMap id="deviceResult" type="Device">
+        <id property="id" jdbcType="INTEGER" column="DeviceID" />
+        <result property="deviceName" jdbcType="VARCHAR" column="DeviceName" />
+        <result property="deviceNumber" jdbcType="VARCHAR" column="DeviceNumber" />
+        <result property="attachNumber" jdbcType="VARCHAR" column="AttachNumber" />
+        <result property="commCategory" jdbcType="INTEGER" column="CommCategory" />
+        <result property="ipAddress" jdbcType="VARCHAR" column="IpAddress" />
+        <result property="port" jdbcType="INTEGER" column="Port" />
+        <result property="status" jdbcType="INTEGER" column="Status" />
+        <association property="site" javaType="Site" column="SiteID" resultMap="siteResult" />
+    </resultMap>
+    <resultMap id="siteResult" type="Site">
+        <result property="id" jdbcType="INTEGER" column="SiteID"/>
+        <result property="siteName" jdbcType="VARCHAR" column="SiteName" />
+        <result property="longitude" jdbcType="DOUBLE" column="Longitude" />
+        <result property="latitude" jdbcType="DOUBLE" column="Latitude" />
+        <result property="address" jdbcType="VARCHAR" column="Address" />
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        a.ID, a.User_IMEI, a.User_IMSI, a.DeviceNumber, a.AttachNumber, a.RecordTime,
+            a.CommOperator, s.id as SiteID, s.SiteName, d.id as DeviceID, d.DeviceName/*, m.id as MonitorID, m.name as MonitorName*/ 
+    </sql>
+    <sql id="Min_Column_List">
+        ID, DeviceID, User_IMEI, User_IMSI, RecordTime, CommOperator
+    </sql>
+    <sql id="INT_UP_Column_List">
+        DeviceID, DeviceNumber, AttachNumber, User_IMSI, User_IMEI, RSSI, LAC, TMSI, RecordTime, CommOperator
+    </sql>
+    <select id="load" parameterType="long" resultMap="hplLogResult">
+        SELECT 
+            <include refid="Min_Column_List" />
+        FROM hpl_log
+        WHERE 
+          ID = #{id}
+    </select>
+    
+    <insert id="insert" parameterType="HplLog" useGeneratedKeys="true" keyProperty="id"> 
+        insert into hpl_log(<include refid="INT_UP_Column_List" />)  
+        values(
+            #{device.id}, 
+            #{device.deviceNumber}, 
+            #{device.attachNumber}, 
+            #{userIMSI}, 
+            #{userIMEI}, 
+            #{rssi}, 
+            #{lac}, 
+            #{tmsi}, 
+            #{recordTime}, 
+            #{commOperator}
+        )  
+    </insert>
+    
+    <!-- 批量添加 -->
+    <insert id="addBatch" parameterType="java.util.List" >
+        insert into hpl_log(<include refid="INT_UP_Column_List" />)
+        values  
+        <foreach item="item" index="index" collection="list" separator="," >
+        (
+            #{item.device.id},
+            #{item.device.deviceNumber}, 
+            #{item.device.attachNumber}, 
+            #{item.userIMSI}, 
+            #{item.userIMEI}, 
+            #{item.rssi}, 
+            #{item.lac}, 
+            #{item.tmsi}, 
+            #{item.recordTime},
+            #{item.commOperator}
+        )
+        </foreach>
+    </insert>
+    
+    <!-- 更新 -->
+    <update id="updateSelective" parameterType="HplLog">
+        UPDATE hpl_log 
+        <set>
+            <if test="device!=null and device.id!=null">
+                DeviceID=#{device.id},
+            </if>
+            <if test="device!=null and device.deviceNumber!=null">
+                DeviceNumber=#{device.deviceNumber},
+            </if>
+            <if test="device!=null and device.attachNumber!=null">
+                AttachNumber=#{device.attachNumber},
+            </if>
+            <if test="userIMSI!=null">
+                User_IMSI=#{userIMSI},
+            </if>
+            <if test="userIMEI!=null">
+                User_IMEI=#{userIMEI},
+            </if>
+            <if test="recordTime!=null">
+                RecordTime=#{recordTime},
+            </if>
+            <if test="commOperator!=null">
+                CommOperator=#{commOperator}
+            </if>
+        </set>
+        WHERE 
+            ID = #{id}
+    </update>
+    
+    <update id="update" parameterType="HplLog" >
+        update hpl_log 
+        set 
+            <if test="device!=null and device.id!=null">
+            DeviceID=#{device.id},
+            </if>
+            DeviceNumber=#{device.deviceNumber},
+            AttachNumber=#{device.attachNumber},
+            User_IMSI=#{userIMSI},
+            User_IMEI=#{userIMEI},
+            RecordTime=#{recordTime},
+            CommOperator=#{commOperator}
+        where ID=#{id}
+    </update>
+    
+    <delete id="delete" parameterType="long">
+        delete from hpl_log where ID=#{id}
+    </delete>
+    
+    <!-- 查询所有的ID -->
+    <select id="findAllIds" resultType="Long">
+        SELECT ID FROM hpl_log
+    </select>
+    <select id="countAll" resultType="Long">
+        SELECT count(0) FROM hpl_log    
+    </select>
+    
+    <select id="findAll" resultMap="hplLogResult">
+        SELECT 
+            <include refid="Min_Column_List" />
+        FROM hpl_log
+    </select>
+    
+    <select id="findImeiPageBreakByCondition" parameterType="map" resultMap="hplLogResult">
+        select ID as ID,  @DeviceID:=DeviceID as DeviceID, @DeviceNumber:=DeviceNumber as DeviceNumber, @AttachNumber:=AttachNumber as AttachNumber, @User_IMSI:=User_IMSI as User_IMSI, @User_IMEI:=User_IMEI as User_IMEI, RecordTime, CommOperator,
+            (select @MonitorID:=m.ID from monitor m where m.IMEI=@User_IMEI limit 1) as MonitorID,
+            (select @MonitorName:=m.Name from monitor m where m.IMEI=@User_IMEI limit 1) as MonitorName,
+            (select @DeviceName:=d.DeviceName  from device d where d.ID=@DeviceID limit 1) as DeviceName
+        from hpl_log
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            AND User_IMEI!=''
+            <if test="status != null">
+                AND DeviceID=#{status}
+            </if>
+            <if test="startDate != null">
+                AND RecordTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND RecordTime &lt;= #{endDate} 
+            </if>
+            <if test="keywords != null">
+                AND User_IMEI LIKE "%"#{keywords}"%"
+            </if>
+        </trim>
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                ORDER BY ID DESC
+            </otherwise>
+        </choose>
+    </select>
+    
+    <select id="findImeiNumberByCondition" resultType="Integer" parameterType="map">
+        SELECT  count(0)
+        FROM hpl_log
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            AND User_IMEI!=''
+            <if test="status != null">
+                AND DeviceID=#{status}
+            </if>
+            <if test="startDate != null">
+                AND RecordTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND RecordTime &lt;= #{endDate} 
+            </if>
+            <if test="keywords != null">
+                AND User_IMEI LIKE "%"#{keywords}"%"
+            </if>
+        </trim>
+    </select>
+    
+    <select id="findImsiPageBreakByCondition" parameterType="map" resultMap="hplLogResult">    
+        select ID as ID, @DeviceID:=DeviceID as DeviceID, @DeviceNumber:=DeviceNumber as DeviceNumber, @AttachNumber:=AttachNumber as AttachNumber, @User_IMSI:=User_IMSI as User_IMSI, @User_IMEI:=User_IMEI as User_IMEI, RecordTime, CommOperator,
+            (select @MonitorID:=m.ID from monitor m where m.IMSI=@User_IMSI limit 1) as MonitorID,
+            (select @MonitorName:=m.Name from monitor m where m.IMSI=@User_IMSI limit 1) as MonitorName,
+            (select @DeviceName:=d.DeviceName from device d where d.ID=@DeviceID limit 1) as DeviceName
+        from hpl_log
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            AND User_IMSI!=''
+            <if test="status != null">
+                AND DeviceID=#{status}
+            </if>
+            <if test="startDate != null">
+                AND RecordTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND RecordTime &lt;= #{endDate} 
+            </if>
+            <if test="keywords != null">
+                AND User_IMSI LIKE "%"#{keywords}"%"
+            </if>
+        </trim>
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                ORDER BY ID desc
+            </otherwise>
+        </choose>
+    </select>
+    
+    <select id="findImsiNumberByCondition" resultType="Integer" parameterType="map">
+        SELECT  count(0)
+        FROM hpl_log
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            AND User_IMSI!=''
+            <if test="status != null">
+                AND DeviceID=#{status}
+            </if>
+            <if test="startDate != null">
+                AND RecordTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND RecordTime &lt;= #{endDate} 
+            </if>
+            <if test="keywords != null">
+                AND User_IMSI LIKE "%"#{keywords}"%"
+            </if>
+        </trim>
+    </select>
+    
+    <!-- 获取IMEI IMSI总页数 有逻辑问题，后续修正，现在没用此查询 -->
+    <select id="findPageBreakByCondition" parameterType="map" resultMap="hplLogResult">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM hpl_log a
+            inner join device d on d.ID=a.DeviceID 
+            left join t_site s on s.ID=d.siteID 
+        <!--
+        <choose>
+            <when  test="type != null and type==1">
+                left join monitor m on a.User_IMSI=m.IMSI
+            </when>
+            <when  test="type != null and type==2">
+                left join monitor m on a.User_IMEI=m.IMEI
+            </when>
+            <otherwise>
+                left join monitor m on a.User_IMEI=m.IMEI and a.User_IMSI=m.IMSI
+            </otherwise>
+        </choose>
+        -->
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="siteID != null">
+                AND s.ID in (#{siteID})
+            </if>
+            <if test="deviceID != null">
+                AND d.ID in (#{deviceID})
+            </if>
+            <if test="status != null">
+                AND a.CommOperator  = #{status} 
+            </if>
+            <if test="startDate != null">
+                AND a.RecordTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND a.RecordTime &lt;= #{endDate} 
+            </if>
+            <if test="keywords != null">
+                <choose>
+                    <when  test="type != null and type == 1">
+                        AND (a.User_IMSI LIKE "%"#{keywords}"%"
+                            or d.DeviceName LIKE "%"#{keywords}"%"
+                            or s.SiteName LIKE "%"#{keywords}"%"
+                        )
+                    </when>
+                    <when  test="type != null and type == 2">
+                        AND (a.User_IMEI LIKE "%"#{keywords}"%"
+                            or d.DeviceName LIKE "%"#{keywords}"%"
+                            or s.SiteName LIKE "%"#{keywords}"%"
+                        )
+                    </when>
+                    <otherwise>
+                        AND (a.User_IMSI LIKE "%"#{keywords}"%"
+                            or a.User_IMEI LIKE "%"#{keywords}"%"
+                            or d.DeviceName LIKE "%"#{keywords}"%"
+                            or s.SiteName LIKE "%"#{keywords}"%"
+                        )
+                    </otherwise>
+                </choose>
+            </if>
+        </trim>
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                order by a.ID DESC
+            </otherwise>
+        </choose>
+    </select>
+    
+    <select id="findNumberByCondition" resultType="Integer" parameterType="map">
+        SELECT count(0) as c 
+        FROM hpl_log a
+            inner join device d on d.ID=a.DeviceID
+            left join t_site s on s.ID=d.siteID 
+        <!--
+        <choose>
+            <when  test="type != null and type==1">
+                left join monitor m on a.User_IMSI=m.IMSI
+            </when>
+            <when  test="type != null and type==2">
+                left join monitor m on a.User_IMEI=m.IMEI
+            </when>
+            <otherwise>
+                left join monitor m on a.User_IMEI=m.IMEI and a.User_IMSI=m.IMSI
+            </otherwise>
+        </choose>
+        -->
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="siteID != null">
+                AND s.ID in (#{siteID})
+            </if>
+            <if test="deviceID != null">
+                AND d.ID in (#{deviceID})
+            </if>
+            <if test="status != null">
+                AND a.CommOperator  = #{status} 
+            </if>
+            <if test="startDate != null">
+                AND a.RecordTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND a.RecordTime &lt;= #{endDate} 
+            </if>
+            <if test="keywords != null">
+                <choose>
+                    <when  test="type != null and type == 1">
+                        AND (a.User_IMSI LIKE "%"#{keywords}"%"
+                            or d.DeviceName LIKE "%"#{keywords}"%"
+                            or s.SiteName LIKE "%"#{keywords}"%"
+                        )
+                    </when>
+                    <when  test="type != null and type == 2">
+                        AND (a.User_IMEI LIKE "%"#{keywords}"%"
+                            or d.DeviceName LIKE "%"#{keywords}"%"
+                            or s.SiteName LIKE "%"#{keywords}"%"
+                        )
+                    </when>
+                    <otherwise>
+                        AND (a.User_IMSI LIKE "%"#{keywords}"%"
+                            or a.User_IMEI LIKE "%"#{keywords}"%"
+                            or d.DeviceName LIKE "%"#{keywords}"%"
+                            or s.SiteName LIKE "%"#{keywords}"%"
+                        )
+                    </otherwise>
+                </choose>
+            </if>
+        </trim>
+    </select>
+    
+</mapper>

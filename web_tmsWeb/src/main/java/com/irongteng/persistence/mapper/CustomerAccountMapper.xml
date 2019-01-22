@@ -1,0 +1,441 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.CustomerAccountMapper">
+
+	<resultMap id="customerResult" type="CustomerAccount">
+		<id property="id" jdbcType="INTEGER" column="ID" />
+		<result property="name" jdbcType="VARCHAR" column="Name" />
+		<result property="psw" jdbcType="VARCHAR" column="Psw" />
+		<result property="phone" jdbcType="INTEGER" column="Phone" />
+		<result property="localBalance" jdbcType="INTEGER" column="LocalBalance" />
+		<result property="thirdBalance" jdbcType="INTEGER" column="ThirdBalance" />
+		<result property="status" jdbcType="VARCHAR" column="Status" />
+		<result property="createDate" jdbcType="TIMESTAMP" column="CreateDate" />
+		<result property="remark" jdbcType="VARCHAR" column="Remark" />
+		<association property="device" javaType="Device" column="DeviceID"
+			resultMap="toDeviceResult" />
+	</resultMap>
+
+	<resultMap id="toDeviceResult" type="Device">
+		<result property="id" jdbcType="INTEGER" column="DeviceID" />
+		<result property="customerID" jdbcType="INTEGER" column="CustomerID" />
+		<result property="deviceName" jdbcType="VARCHAR" column="DeviceName" />
+		<result property="deviceIP" jdbcType="VARCHAR" column="DeviceIP" />
+		<result property="deviceType" jdbcType="INTEGER" column="DeviceType" />
+		<result property="featureCode" jdbcType="VARCHAR" column="FeatureCode" />
+		<result property="address" jdbcType="VARCHAR" column="Address" />
+		<result property="areaLocation" jdbcType="VARCHAR" column="AreaLocation" />
+		<result property="longitude" jdbcType="VARCHAR" column="Longitude" />
+		<result property="latitude" jdbcType="VARCHAR" column="Latitude" />
+		<result property="createTime" jdbcType="TIMESTAMP" column="CreateTime" />
+		<result property="remark" jdbcType="VARCHAR" column="Remark" />
+	</resultMap>
+
+	<sql id="Insert_Column_List">
+		name, phone, deviceID, psw,
+		localBalance,thirdBalance,status,createDate,remark
+	</sql>
+
+	<sql id="Base_Column_List">
+		td.id,
+		dd.deviceName,
+		td.name,
+		td.psw,
+		td.deviceID,
+		td.phone,
+		td.localBalance,
+		td.thirdBalance,
+		td.status,
+		td.createDate,
+		td.remark,
+		dd.id as DeviceID,
+		dd.customerID,
+		dd.deviceIP,
+		dd.areaLocation,
+		dd.deviceType,
+		dd.featureCode,
+		dd.address,
+		dd.longitude,
+		dd.latitude,
+		dd.createTime,
+		dd.remark as toremark
+	</sql>
+
+	<sql id="Base_Table_List">
+		t_customer_account td
+		inner join t_device dd on td.deviceID=dd.ID
+	</sql>
+
+	<sql id="Base_Query_List">
+		SELECT
+		<include refid="Base_Column_List" />
+		FROM
+		<include refid="Base_Table_List" />
+	</sql>
+
+	<sql id="Base_Count_List">
+		select count(0) as c from
+		<include refid="Base_Table_List" />
+	</sql>
+
+	<sql id="Base_Order_By">
+		order by td.id
+	</sql>
+
+	<sql id="Base_Page_Condition">
+		<choose>
+			<when test="orderField !=null and orderField !=''">
+				ORDER BY ${orderField}
+				<if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+			</when>
+			<otherwise>
+				<include refid="Base_Order_By" />
+			</otherwise>
+		</choose>
+	</sql>
+
+	<sql id="Base_Where_Condition">
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+			<if test="name != null">
+				AND td.Name = #{name}
+			</if>
+			<if test="deviceName != null">
+				AND dd.DeviceName = #{deviceName}
+			</if>
+			<if test="phone != null">
+				AND td.Phone = #{phone}
+			</if>
+			<if test="deviceID != null">
+				AND td.DeviceID = #{deviceID}
+			</if>
+			<if test="psw != null">
+				AND td.Psw = #{psw}
+			</if>
+			<if test="localBalance != null">
+				AND td.LocalBalance = #{localBalance}
+			</if>
+			<if test="thirdBalance != null">
+				AND td.ThirdBalance = #{thirdBalance}
+			</if>
+			<if test="status != null">
+				AND td.Status = #{status}    
+			</if>
+			<if test="createDate != null">
+				AND td.CreateDate = #{createDate}
+			</if>
+			<if test="remark != null">
+				AND td.Remark = #{remark}
+			</if>
+			<if test="customerID != null">
+				AND dd.CustomerID = #{customerID}
+			</if>
+			<if test="deviceIP != null">
+				AND dd.DeviceIP = #{deviceIP}
+			</if>
+			<if test="areaLocation != null">
+				AND dd.AreaLocation = #{areaLocation}
+			</if>
+			<if test="deviceType != null">
+				AND dd.DeviceType = #{deviceType}
+			</if>
+			<if test="featureCode != null">
+				AND dd.FeatureCode = #{featureCode}
+			</if>
+			<if test="address != null">
+				AND dd.Address = #{address}
+			</if>
+			<if test="longitude != null">
+				AND dd.Longitude = #{longitude}
+			</if>
+			<if test="latitude != null">
+				AND dd.Latitude = #{latitude}
+			</if>
+			<if test="keywords != null">
+				AND (
+				td.name LIKE "%"#{keywords}"%"
+				or td.phone LIKE "%"#{keywords}"%"
+				or dd.deviceName LIKE "%"#{keywords}"%"
+				)
+			</if>
+		</trim>
+	</sql>
+
+	<select id="load" parameterType="Integer" resultMap="customerResult">
+		<include refid="Base_Query_List" />
+		WHERE td.ID = #{id}
+	</select>
+
+	<select id="countAll" resultType="Integer">
+		<include refid="Base_Count_List" />
+	</select>
+
+	<select id="findAll" resultMap="customerResult">
+		<include refid="Base_Query_List" />
+		<include refid="Base_Order_By" />
+	</select>
+
+	<select id="queryByPhone" parameterType="String" resultMap="customerResult">
+		select
+		id,
+		name,
+		psw,
+		deviceID,
+		phone,
+		localBalance,
+		thirdBalance,
+		status,
+		createDate,
+		remark
+		<!-- <include refid="Base_Column_List" /> -->
+		from t_customer_account
+		where
+		Phone = #{phone}
+	</select>
+
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id"
+		parameterType="CustomerAccount">
+		INSERT INTO t_customer_account (
+		<include refid="Insert_Column_List" />
+		) VALUES (
+		#{name},
+		#{phone},
+		#{device.id},
+		#{psw},
+		#{localBalance},
+		#{thirdBalance},
+		#{status},
+		#{createDate},
+		#{remark}
+		)
+	</insert>
+
+	<update id="update" parameterType="CustomerAccount">
+		UPDATE t_customer_account
+		SET
+		Name=#{name},
+		Phone=#{phone},
+		DeviceID=#{device.id},
+		Psw=#{psw},
+		LocalBalance=#{localBalance},
+		ThirdBalance=#{thirdBalance},
+		Status=#{status},
+		CreateDate=#{createDate},
+		Remark=#{remark}
+		where
+		ID = #{id}
+	</update>
+
+	<update id="updateSelective" parameterType="CustomerAccount">
+		UPDATE t_customer_account
+		<set>
+			<if test="name !=null">
+				Name=#{name},
+			</if>
+			<if test="phone !=null">
+				Phone=#{phone},
+			</if>
+			<if test="device.id!=null">
+				DeviceID=#{device.id},
+			</if>
+			<if test="psw !=null">
+				Psw=#{psw},
+			</if>
+			<if test="localBalance !=null">
+				LocalBalance=#{localBalance},
+			</if>
+			<if test="thirdBalance !=null">
+				ThirdBalance=#{thirdBalance},
+			</if>
+			<if test="status !=null">
+				Status=#{status},
+			</if>
+			<if test="createDate !=null">
+				CreateDate=#{createDate},
+			</if>
+			<if test="remark !=null">
+				Remark=#{remark}
+			</if>
+		</set>
+		WHERE
+		ID = #{id}
+	</update>
+	
+	
+	   <select id="isUniqueName" parameterType="String" resultType="Integer">
+        select count(0) as c
+        from t_customer_account
+        where
+        ID != #{id} and Name = #{name}
+    </select>
+
+	<!-- 批量更新 -->
+	<update id="updateBatchSelective" parameterType="java.util.List">
+		<foreach item="item" collection="list" index="index" open=""
+			close="" separator=";">
+			UPDATE t_customer_account
+			SET
+			LogTypeID = #{item.logTypeID},
+			Name=#{item.name},
+			Phone=#{item.phone},
+			DeviceID=#{item.device.id},
+			Psw=#{item.psw},
+			LocalBalance=#{item.localBalance},
+			ThirdBalance=#{item.thirdBalance},
+			Status=#{item.status},
+			CreateDate=#{item.createDate},
+			Remark=#{item.remark}
+			where
+			ID = #{item.id}
+		</foreach>
+	</update>
+
+	<!-- 参数带回 -->
+	<select id="parameter" resultMap="customerResult">
+		select
+		id,
+		name,
+		psw,
+		deviceID,
+		phone,
+		localBalance,
+		thirdBalance,
+		status,
+		createDate,
+		remark
+		<!-- <include refid="Base_Column_List" /> -->
+		from t_customer_account
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+			<if test="keywords != null">
+				name like CONCAT("%",#{keywords},"%")
+			</if>
+		</trim>
+	</select>
+
+	<select id="queryByLikeName" parameterType="com.irongteng.persistence.beans.Customer"
+		resultMap="customerResult">
+		select
+		id,
+		name,
+		psw,
+		deviceID,
+		phone,
+		localBalance,
+		thirdBalance,
+		status,
+		createDate,
+		remark
+		<!-- <include refid="Base_Column_List" /> -->
+		from customer
+		where 1=1
+		<if test="phone!=null">
+			AND phone=#{phone}
+		</if>
+		<if test="id!=null">
+			AND id=#{id}
+		</if>
+		<if test="name!=null">
+			AND name LIKE CONCAT("%", #{name}, "%")
+		</if>
+	</select>
+
+	<select id="queryByName" parameterType="String" resultMap="customerResult">
+		select td.id,tc.deviceName,td.name,td.psw,td.deviceID,
+		td.phone,td.localBalance,td.thirdBalance,td.
+		status,td.createDate,td.remark
+		from t_customer_account td inner join t_device tc on td.deviceID=tc.ID
+		<where>
+			<if test="name!=null">
+				td.Name = #{name}
+			</if>
+		</where>
+	</select>
+
+	<insert id="addBatch" parameterType="java.util.List">
+		insert into t_customer_account(
+		<include refid="Insert_Column_List" />
+		)
+		values
+		<foreach item="item" index="index" collection="list"
+			separator=",">
+			(
+			#{item.name},
+			#{item.phone},
+			#{item.deviceID},
+			#{item.psw},
+			#{item.localBalance},
+			#{item.thirdBalance},
+			#{item.status},
+			#{item.createDate},
+			#{item.remark}
+			)
+		</foreach>
+	</insert>
+
+	<update id="addOrUpdate" parameterType="CustomerAccount">
+		INSERT into t_customer_account(
+		<include refid="Insert_Column_List" />
+		)
+		values(
+		#{name},
+		#{phone},
+		#{deviceID},
+		#{psw},
+		#{localBalance},
+		#{thirdBalance},
+		#{status},
+		#{createDate},
+		#{remark}
+		)
+		ON DUPLICATE KEY UPDATE Contact=#{contact}
+	</update>
+
+	<delete id="delete" parameterType="Integer">
+		DELETE FROM t_customer_account where ID=#{id}
+	</delete>
+
+	<!-- 按Phone删除 -->
+	<delete id="deleteByPhone" parameterType="String">
+		DELETE FROM t_customer_account WHERE Contact=#{contact}
+	</delete>
+
+	<!-- 批量删除 -->
+	<delete id="deleteBatchByPhone" parameterType="java.util.List">
+		DELETE FROM t_customer_account WHERE
+		contact in
+		<foreach collection="list" item="item" open="(" separator=","
+			close=")">
+			#{item}
+		</foreach>
+	</delete>
+
+    <update id="updateStatus" parameterType="map">
+        UPDATE t_customer_account
+        SET
+        Status = #{status}
+        WHERE
+        ID = #{id}
+    </update>
+
+	<select id="findByCondition" resultMap="customerResult"
+		parameterType="map">
+		<include refid="Base_Query_List" />
+		<include refid="Base_Where_Condition" />
+		<include refid="Base_Page_Condition" />
+	</select>
+
+	<select id="findPageBreakByCondition" resultMap="customerResult"
+		parameterType="map">
+		<include refid="Base_Query_List" />
+		<include refid="Base_Where_Condition" />
+		<include refid="Base_Page_Condition" />
+	</select>
+
+	<select id="findNumberByCondition" resultType="Integer"
+		parameterType="map">
+		<include refid="Base_Count_List" />
+		<include refid="Base_Where_Condition" />
+	</select>
+
+</mapper>    

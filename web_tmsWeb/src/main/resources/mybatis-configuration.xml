@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    
+    <settings>
+        <setting name="cacheEnabled" value="true"/>
+    </settings>
+    
+    <typeAliases> 
+        <!-- <typeAlias alias="User" type="com.irongteng.persistence.beans.User"/> -->
+        <typeAlias alias="Attribution" type="com.irongteng.persistence.beans.Attribution"/>
+        <typeAlias alias="ImsiPhone" type="com.irongteng.persistence.beans.ImsiPhone"/>
+         <typeAlias alias="User" type="com.irongteng.persistence.beans.User"/>
+        <typeAlias alias="UserLogger" type="com.irongteng.persistence.beans.UserLogger"/>
+        <typeAlias alias="WebPage" type="com.irongteng.persistence.beans.WebPage"/>
+        <typeAlias alias="WebWebsite" type="com.irongteng.persistence.beans.WebWebsite"/>
+         <typeAlias alias="Customer" type="com.irongteng.persistence.beans.Customer"/>
+          <typeAlias alias="CustomerAccount" type="com.irongteng.persistence.beans.CustomerAccount"/>
+           <typeAlias alias="Device" type="com.irongteng.persistence.beans.Device"/>
+           <typeAlias alias="LoadInfo" type="com.irongteng.persistence.beans.LoadInfo"/>
+           <typeAlias alias="CommLog" type="com.irongteng.persistence.beans.CommLog"/>
+           <typeAlias alias="LogType" type="com.irongteng.persistence.beans.LogType"/>
+           <typeAlias alias="TranstFlow" type="com.irongteng.persistence.beans.TranstFlow"/>
+           <typeAlias alias="DeviceOp" type="com.irongteng.persistence.beans.DeviceOp"/>
+           <typeAlias alias="LoadOP" type="com.irongteng.persistence.beans.LoadOP"/>
+            <typeAlias alias="OpInfo" type="com.irongteng.persistence.beans.OpInfo"/>
+            <typeAlias alias="DeviceRand" type="com.irongteng.persistence.beans.DeviceRand"/>
+    </typeAliases>
+    
+    <plugins>
+        <plugin interceptor="dwz.dal.mybatis.plugin.OffsetLimitInterceptor">
+            <property name="dialectClass" value="dwz.dal.mybatis.dialect.MySQLDialect"/>
+        </plugin>
+    </plugins>
+</configuration>

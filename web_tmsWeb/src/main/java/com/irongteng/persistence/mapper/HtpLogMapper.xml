@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.HtpLogMapper">
+    
+    <cache />
+    
+    <resultMap id="hplLogResult" type="HtpLog">
+        <id  property="id" jdbcType="BIGINT" column="HtpLogID" />
+        <result property="recordTime" jdbcType="TIMESTAMP" column="RecordTime" />
+        <result property="sequence" jdbcType="VARCHAR" column="Sequence" />
+        <result property="srcMac" jdbcType="VARCHAR" column="Source_MAC" />
+        <result property="destMac" jdbcType="VARCHAR" column="Dest_MAC" />
+        <result property="srcIP" jdbcType="VARCHAR" column="Source_IP" />
+        <result property="destIP" jdbcType="VARCHAR" column="Dest_IP" />
+        <result property="website" jdbcType="VARCHAR" column="Website" />
+        <association property="device" javaType="Device" column="DeviceID" resultMap="deviceResult" />
+        <!--<association property="monitor" javaType="Monitor" column="Source_MAC" resultMap="monitorResult" />-->
+    </resultMap>
+    <!--    
+    <resultMap id="monitorResult" type="Monitor">
+        <id property="id" jdbcType="INTEGER" column="MonitorID"/>
+        <result property="name" jdbcType="VARCHAR" column="MonitorName" />
+        <result property="mac" jdbcType="VARCHAR" column="Source_MAC" />
+        <result property="remark" jdbcType="VARCHAR" column="Remark" />
+    </resultMap>
+    -->
+    <!-- 设备信息表 -->
+    <resultMap id="deviceResult" type="Device">
+        <id property="id" jdbcType="INTEGER" column="DeviceID" />
+        <result property="deviceName" jdbcType="VARCHAR" column="DeviceName" />
+        <result property="deviceNumber" jdbcType="VARCHAR" column="DeviceNumber" />
+        <result property="attachNumber" jdbcType="VARCHAR" column="AttachNumber" />
+        <result property="commCategory" jdbcType="INTEGER" column="CommCategory" />
+        <result property="ipAddress" jdbcType="VARCHAR" column="IpAddress" />
+        <result property="port" jdbcType="INTEGER" column="Port" />
+        <result property="status" jdbcType="INTEGER" column="Status" />
+        <association property="site" javaType="Site" column="SiteID" resultMap="siteResult" />
+    </resultMap>
+    <resultMap id="siteResult" type="Site">
+        <result property="id" jdbcType="INTEGER" column="SiteID"/>
+        <result property="siteName" jdbcType="VARCHAR" column="SiteName" />
+        <result property="longitude" jdbcType="DOUBLE" column="Longitude" />
+        <result property="latitude" jdbcType="DOUBLE" column="Latitude" />
+        <result property="address" jdbcType="VARCHAR" column="Address" />
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        a.ID as HtpLogID, a.RecordTime, a.Sequence, a.Source_MAC, a.Dest_MAC, a.Source_IP, a.Dest_IP, a.Website, 
+            d.SiteID, s.SiteName, a.DeviceID, d.DeviceName
+    </sql>
+    
+    <select id="load" parameterType="long" resultMap="hplLogResult">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM htp_log a
+            inner join device d on d.ID=a.DeviceID
+            left join t_site s on s.ID=d.siteID
+        WHERE 
+          a.ID = #{id}
+    </select>
+    
+    <insert id="insert" parameterType="HtpLog" useGeneratedKeys="true" keyProperty="id"> 
+        insert into htp_log (
+            DeviceID, 
+            RecordTime, 
+            Sequence, 
+            Source_MAC, 
+            Dest_MAC, 
+            Source_IP, 
+            Dest_IP, 
+            Website
+        )  values (
+            #{device.id}, 
+            #{recordTime}, 
+            #{sequence}, 
+            #{srcMac}, 
+            #{destMac}, 
+            #{srcIP}, 
+            #{item.destIP}, 
+            #{item.website}
+        )  
+    </insert>
+    
+    <!-- 批量添加 -->
+    <insert id="addBatch" parameterType="java.util.List" >
+        insert into htp_log(
+            DeviceID, 
+            RecordTime, 
+            Sequence, 
+            Source_MAC, 
+            Dest_MAC, 
+            Source_IP, 
+            Dest_IP, 
+            Website
+        )
+        values  
+        <foreach item="item" index="index" collection="list" separator="," >
+            (#{item.device.id}, 
+            #{item.recordTime}, 
+            #{item.sequence}, 
+            #{item.srcMac}, 
+            #{item.destMac}, 
+            #{item.srcIP}, 
+            #{item.destIP}, 
+            #{item.website}) 
+        </foreach>
+    </insert>
+    
+    <!-- 查询所有的ID -->
+    <select id="findAllIds" resultType="Long">
+        SELECT ID FROM htp_log
+    </select>
+    <select id="countAll" resultType="Long">
+        SELECT count(0) FROM htp_log    
+    </select>
+    
+    <select id="findAll" resultMap="hplLogResult">
+        
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM htp_log a
+            inner join device d on d.ID=a.DeviceID
+            left join t_site s on s.ID=d.siteID
+    </select>
+    
+    <!-- 更新 -->
+    <update id="updateSelective" parameterType="HtpLog">
+        UPDATE htp_log 
+        <set>
+            <if test="device!=null and device.id!=null">
+            DeviceID=#{device.id},
+            </if>
+            <if test="sequence!=null">
+            Sequence=#{sequence},
+            </if>
+            <if test="srcMac!=null">
+            Source_MAC=#{srcMac},
+            </if>
+            <if test="destMac!=null">
+            Dest_MAC=#{destMac},
+            </if>
+            <if test="srcIP!=null">
+            Source_IP=#{srcIP},
+            </if>
+            <if test="destIP!=null">
+            Dest_IP=#{destIP},
+            </if>
+            <if test="recordTime!=null">
+            RecordTime=#{recordTime},
+            </if>
+            <if test="website!=null">
+            Website=#{website}
+            </if>
+        </set>
+        WHERE 
+            ID = #{id}
+    </update>
+    
+    <update id="update" parameterType="HtpLog" >
+        update htp_log set 
+            DeviceID=#{device.id},
+            Sequence=#{sequence},
+            Source_MAC=#{srcMac},
+            Dest_MAC=#{destMac},
+            Source_IP=#{srcIP},
+            Dest_IP=#{destIP},
+            RecordTime=#{recordTime},
+            Website=#{website}
+         where ID=#{id}
+    </update>
+    
+    <delete id="delete" parameterType="long">
+        delete from htp_log where ID=#{id}
+    </delete>
+    
+    <!-- 获取内容 -->
+    <select id="findPageBreakByCondition" parameterType="map" resultMap="hplLogResult">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM htp_log a
+            inner join device d on d.ID=a.DeviceID
+            left join t_site s on s.ID=d.siteID
+        
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="siteID != null">
+                AND s.ID in (#{siteID})
+            </if>
+            <if test="deviceID != null">
+                AND d.ID in (#{deviceID})
+            </if>
+            <if test="startDate != null">
+                AND a.RecordTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND a.RecordTime &lt;= #{endDate} 
+            </if>
+            <if test="keywords != null">
+                AND (s.SiteName LIKE "%"#{keywords}"%"
+                    d.DeviceName LIKE "%"#{keywords}"%"
+                    or d.DeviceNumber LIKE "%"#{keywords}"%"
+                )
+            </if>
+        </trim>
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                 ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                 order by a.ID DESC
+            </otherwise>
+        </choose>
+    </select>
+    
+    <select id="findNumberByCondition" resultType="Integer" parameterType="map">
+        SELECT count(a.ID) as c 
+        FROM htp_log a
+            inner join device d on d.ID=a.DeviceID
+            left join t_site s on s.ID=d.siteID
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="siteID != null">
+                AND s.ID in (#{siteID})
+            </if>
+            <if test="deviceID != null">
+                AND d.ID in (#{deviceID})
+            </if>
+            <if test="startDate != null">
+                AND a.RecordTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND a.RecordTime &lt;= #{endDate} 
+            </if>
+            <if test="keywords != null">
+                AND (s.SiteName LIKE "%"#{keywords}"%"
+                    d.DeviceName LIKE "%"#{keywords}"%"
+                    or d.DeviceNumber LIKE "%"#{keywords}"%"
+                )
+            </if>
+        </trim>
+
+    </select>
+</mapper>

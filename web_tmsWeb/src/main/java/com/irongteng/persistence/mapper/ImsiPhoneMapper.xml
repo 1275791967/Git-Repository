@@ -1,0 +1,419 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.ImsiPhoneMapper">
+
+	<resultMap id="ImsiPhoneResult" type="ImsiPhone">
+		<id property="id" jdbcType="INTEGER" column="ID" />
+		<result property="imsi" jdbcType="VARCHAR" column="IMSI" />
+		<result property="phone" jdbcType="VARCHAR" column="Phone" />
+		<result property="province" jdbcType="VARCHAR" column="Province" />
+		<result property="recordTime" jdbcType="TIMESTAMP" column="RecordTime" />
+		<result property="ownID" jdbcType="VARCHAR" column="OwnID" />
+		<result property="address" jdbcType="VARCHAR" column="Address" />
+		<result property="province" jdbcType="VARCHAR" column="Province" />
+		<result property="city" jdbcType="VARCHAR" column="City" />
+		<result property="remark" jdbcType="VARCHAR" column="Remark" />
+		<result property="name" jdbcType="VARCHAR" column="Name" />
+		<result property="imei" jdbcType="VARCHAR" column="Imei" />
+		<result property="mac" jdbcType="VARCHAR" column="Mac" />
+		<result property="imsi_MSISDN" jdbcType="VARCHAR" column="Imsi_MSISDN" />
+	</resultMap>
+
+	<sql id="Base_Column_List">
+		ID,IMSI, Phone, Province, City, Remark,Imei,Mac,Imsi_MSISDN,Name,OwnID,Address,RecordTime
+	</sql>
+
+	<sql id="Simple_Column_List">
+		ID, IMSI, Phone,Imei,Mac,Imsi_MSISDN,Name,Address,OwnID
+	</sql>
+
+	<sql id="Map_Column_List">
+		ID, IMSI, Phone,Imei,Mac,Imsi_MSISDN,Name,Address,OwnID
+	</sql>
+
+	<sql id="INT_UP_Column_List">
+		IMSI, Phone, RecordTime, Province, City, Remark,Imei,Mac,Name,OwnID,Address,Imsi_MSISDN
+	</sql>
+	
+	<sql id="Base_Table">
+        t_imsi_phone
+    </sql>
+
+	<select id="load" parameterType="Integer" resultMap="ImsiPhoneResult">
+		SELECT
+		<include refid="Base_Column_List" />
+		FROM <include refid="Base_Table" />
+		WHERE
+		ID = #{id}
+	</select>
+
+	<select id="findAll" resultMap="ImsiPhoneResult">
+		SELECT
+		<include refid="Map_Column_List" />
+		FROM <include refid="Base_Table" />
+	</select>
+
+	<select id="countAll" resultType="Integer">
+		SELECT count(0) as c FROM <include refid="Base_Table" />
+	</select>
+
+	<!-- 查询所有的短信号码段 -->
+	<select id="queryAllPhone" resultType="String">
+		SELECT Phone FROM <include refid="Base_Table" />
+	</select>
+
+	<!-- 查询所有的IMSI -->
+	<select id="queryAllImsi" resultType="String">
+		SELECT IMSI FROM <include refid="Base_Table" />
+	</select>
+
+	<!-- 根据设备ID查找参数值与参数相关信息 -->
+	<select id="queryByPhone" parameterType="String" resultMap="ImsiPhoneResult">
+		select
+		<include refid="Simple_Column_List" />
+		from <include refid="Base_Table" />
+		where
+		Phone = #{phone}
+	</select>
+
+	<!-- 根据设备ID查找参数值与参数相关信息 -->
+	<select id="queryByImsi" parameterType="String" resultMap="ImsiPhoneResult">
+		select
+		<include refid="Simple_Column_List" />
+		from <include refid="Base_Table" />
+		where
+		IMSI = #{imsi}
+	</select>
+
+	<!-- 判断参数DeviceID和CategoryParameterID联合主键是否存在 -->
+	<select id="isExistPhone" parameterType="String" resultType="Integer">
+		select count(0) as c
+		from <include refid="Base_Table" />
+		where
+		ID != #{id} and Phone = #{phone}
+	</select>
+	<!-- 判断参数IMSI是否存在 -->
+	<select id="isExistImsi" parameterType="String" resultType="Integer">
+		select count(0) as c
+		from <include refid="Base_Table" />
+		where
+		ID != #{id} and IMSI = #{imsi}
+	</select>
+
+	<!-- 插入 -->
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO <include refid="Base_Table" /> (
+		<include refid="INT_UP_Column_List" />
+		) VALUES (
+		#{imsi},
+		#{phone},
+		#{recordTime},
+		#{province},
+		#{city},
+		#{remark},
+		#{imei},
+        #{mac},
+        #{name},
+        #{ownID},
+        #{address},
+        #{imsi_MSISDN}
+		
+		)
+	</insert>
+
+	<!-- 批量插入 -->
+	<insert id="addBatch" parameterType="java.util.List">
+		insert into <include refid="Base_Table" />(
+		<include refid="INT_UP_Column_List" />
+		)
+		values
+		<foreach item="item" index="index" collection="list"
+			separator=",">
+		(
+		#{item.imsi},
+		#{item.phone},
+		#{item.recordTime},
+		#{item.province},
+		#{item.city},
+		#{item.remark},
+		#{item.imei},
+		#{item.mac},
+		#{item.name},
+		#{item.ownID},
+		#{item.address},
+		#{item.imsi_MSISDN}
+	)
+		</foreach>
+	</insert>
+
+	<!-- 添加或者更新记录 -->
+	<update id="addOrUpdate" parameterType="ImsiPhone">
+		INSERT into <include refid="Base_Table" />(
+		<include refid="INT_UP_Column_List" />
+	)
+	values(
+	#{imsi},
+	#{phone},
+	#{recordTime},
+	#{province},
+	#{city},
+	#{remark},
+	#{imei},
+	#{mac},
+	#{name},
+	#{ownID},
+	#{address},
+	#{imsi_MSISDN}
+	)
+	ON DUPLICATE KEY UPDATE Phone=#{phone}
+	</update>
+
+	<!-- 更新 -->
+	<update id="update" parameterType="ImsiPhone">
+		UPDATE <include refid="Base_Table" /> SET
+		IMSI=#{imsi},
+		Phone=#{phone},
+		RecordTime=#{recordTime},
+		Province=#{province},
+		City=#{city},
+		Remark=#{remark},
+		Province=#{province},
+        Imei=#{imei},
+        Name=#{name},
+        OwnID=#{ownID},
+        Address=#{address}, 
+        Mac=#{mac},
+		Imsi_MSISDN = #{imsi_MSISDN}
+		where
+		ID = #{id}
+	</update>
+
+	<!-- 按条件更新 -->
+	<update id="updateSelective" parameterType="ImsiPhone">
+		UPDATE <include refid="Base_Table" />
+		<set>
+			<if test="imsi!=null">
+				IMSI=#{imsi},
+			</if>
+			<if test="phone!=null">
+				Phone=#{phone},
+			</if>
+			<if test="recordTime!=null">
+				RecordTime=#{recordTime},
+			</if>
+			<if test="province!=null">
+				Province=#{province},
+			</if>
+			<if test="city!=null">
+				City=#{city},
+			</if>
+			<if test="remark!=null">
+				Remark=#{remark},
+			</if>
+			<if test="mac!=null">
+				Mac=#{mac},
+			</if>
+			<if test="imei!=null">
+				Imei=#{imei},
+			</if>
+			<if test="name!=null">
+                Name=#{name},
+            </if>
+            <if test="ownID!=null">
+                OwnID=#{ownID},
+            </if>
+            <if test="address!=null">
+                Address=#{address},
+            </if>
+			<if test="imsi_MSISDN!=null">
+				Imsi_MSISDN=#{imsi_MSISDN}
+			</if>
+		</set>
+		WHERE
+		ID = #{id}
+	</update>
+
+	<!-- 按条件批量更新 -->
+	<update id="updateBatchSelective" parameterType="java.util.List">
+		<foreach item="item" collection="list" index="index" open=""
+			close="" separator=";">
+			update <include refid="Base_Table" />
+			<set>
+				<if test="item.imsi!=null">
+					IMSI=#{item.imsi},
+				</if>
+				<if test="item.phone!=null">
+					Phone=#{item.phone},
+				</if>
+				<if test="item.recordTime!=null">
+					RecordTime=#{item.recordTime},
+				</if>
+				<if test="item.province!=null">
+					Province=#{item.province},
+				</if>
+				<if test="item.city!=null">
+					City=#{item.city},
+				</if>
+				<if test="item.remark!=null">
+					Remark=#{item.remark},
+				</if>
+				<if test="item.mac!=null">
+					Mac=#{item.mac},
+				</if>
+				<if test="item.name!=null">
+                    Name=#{item.name},
+                </if>
+                <if test="item.ownID!=null">
+                    OwnID=#{item.ownID},
+                </if>
+                <if test="item.address!=null">
+                    Address=#{item.address},
+                </if>
+				<if test="item.imei!=null">
+					Imei=#{item.imei},
+				</if>
+				<if test="item.imsi_MSISDN!=null">
+					Imsi_MSISDN=#{item.imsi_MSISDN}
+				</if>
+			</set>
+			<trim prefix="WHERE" prefixOverrides="AND|OR">
+				<choose>
+					<when test="item.id!=null">
+						AND ID=#{item.id}
+					</when>
+					<otherwise>
+						<choose>
+							<when test="item.phone!=null">
+								AND Phone=#{item.phone}
+							</when>
+							<otherwise>
+								AND ID = 0
+							</otherwise>
+						</choose>
+					</otherwise>
+				</choose>
+			</trim>
+		</foreach>
+	</update>
+
+	<!-- 按Id删除 -->
+	<delete id="delete" parameterType="Integer">
+		DELETE FROM <include refid="Base_Table" /> where ID=#{id}
+	</delete>
+
+	<!-- 按设备编号或属性编号可选择删除 -->
+	<delete id="deleteSelective" parameterType="ImsiPhone">
+		DELETE FROM <include refid="Base_Table" />
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+			<choose>
+				<when test="id!=null">
+					AND ID=#{id}
+				</when>
+				<otherwise>
+					<choose>
+						<when test="phone!=null">
+							AND Phone=#{phone}
+						</when>
+						<otherwise>
+							AND ID = 0
+						</otherwise>
+					</choose>
+				</otherwise>
+			</choose>
+		</trim>
+	</delete>
+
+	<!-- 按Phone删除 -->
+	<delete id="deleteByPhone" parameterType="String">
+		DELETE FROM <include refid="Base_Table" /> WHERE Phone = #{phone}
+	</delete>
+
+	<!-- 批量删除 -->
+	<delete id="deleteBatch" parameterType="java.util.List">
+		DELETE FROM <include refid="Base_Table" /> WHERE
+		ID in
+		<foreach collection="list" item="item" open="(" separator=","
+			close=")">
+			#{item}
+		</foreach>
+	</delete>
+
+	<!-- 批量删除 -->
+	<delete id="deleteBatchByPhone" parameterType="java.util.List">
+		DELETE FROM <include refid="Base_Table" /> WHERE
+		Phone in
+		<foreach collection="list" item="item" open="(" separator=","
+			close=")">
+			#{item}
+		</foreach>
+	</delete>
+
+	<!-- 指定页查询 -->
+	<select id="findPageBreakByCondition" resultMap="ImsiPhoneResult"
+		parameterType="map">
+		SELECT
+		<include refid="Base_Column_List" />
+		from <include refid="Base_Table" />
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+			<if test="status != null">
+				AND Province=#{status}
+			</if>
+			<if test="type != null">
+				AND City=#{type}
+			</if>
+			<if test="keywords != null">
+			     AND (Phone LIKE "%"#{keywords}"%" or IMSI LIKE "%"#{keywords}"%")
+				<!--<choose>
+					 <when test="keywords.length() != 7">
+						AND (Phone LIKE "%"#{keywords}"%" or IMSI LIKE "%"#{keywords}"%")
+					</when>
+					<otherwise>
+						AND (Phone=#{keywords} or IMSI LIKE "%"#{keywords}"%")
+					</otherwise> 
+				</choose>-->
+			</if>
+		</trim>
+		<choose>
+			<when test="orderField !=null and orderField !=''">
+				ORDER BY ${orderField}
+				<if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+			</when>
+			<otherwise>
+				order by Phone
+			</otherwise>
+		</choose>
+	</select>
+	
+
+	<!-- 指定页查询总条数 -->
+	<select id="findNumberByCondition" resultType="Integer"
+		parameterType="map">
+		select count(0) as c
+		from <include refid="Base_Table" />
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+			<if test="status != null">
+				AND Province=#{status}
+			</if>
+			<if test="type != null">
+				AND City=#{type}
+			</if>
+			<if test="keywords != null">
+			 AND (Phone LIKE "%"#{keywords}"%" or IMSI LIKE "%"#{keywords}"%")
+				<!-- <choose>
+					 <when test="keywords.length() != 7"> 
+						AND Phone LIKE "%"#{keywords}"%"
+					</when>
+					<otherwise>
+						AND Phone=#{keywords}
+					</otherwise> 
+				</choose> -->
+			</if>
+		</trim>
+	</select>
+
+	<select id="getLastRecordTime" resultType="java.util.Date">
+		select max(RecordTime) as c from <include refid="Base_Table" />
+	</select>
+
+</mapper>

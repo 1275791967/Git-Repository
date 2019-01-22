@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.LineTrackMapper">
+    
+    <cache />
+    
+    <!-- 轨迹查询 -->
+    <resultMap id="lineTrackResult" type="LineTrack">
+        <id property="id" jdbcType="BIGINT" column="ID" />
+        <result property="type" jdbcType="INTEGER" column="Type" />
+        <result property="content" jdbcType="VARCHAR" column="Content" />
+        <result property="deviceID" jdbcType="INTEGER" column="DeviceID" />
+        <result property="deviceName" jdbcType="VARCHAR" column="DeviceName" />
+        <result property="siteID" jdbcType="INTEGER" column="SiteID" />
+        <result property="siteName" jdbcType="VARCHAR" column="SiteName" />
+        <result property="longitude" jdbcType="DOUBLE" column="Longitude" />
+        <result property="latitude" jdbcType="DOUBLE" column="Latitude" />
+        <result property="monitorID" jdbcType="INTEGER" column="MonitorID"/>
+        <result property="monitorName" jdbcType="VARCHAR" column="MonitorName" />
+        <result property="recordTime" jdbcType="TIMESTAMP" column="RecordTime" />
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        ID, Content, RecordTime, DeviceID, DeviceName,SiteID, SiteName, Longitude, Latitude, MonitorID, MonitorName
+    </sql>
+    <sql id="Mac_Column_List">
+        v.ID, v.User_Mac as Content, v.StartTime as RecordTime, v.DeviceID, d.DeviceName, d.SiteID, s.SiteName, s.Longitude, s.Latitude, m.id as MonitorID, m.name as MonitorName
+    </sql>
+    <sql id="IMSI_Column_List">
+        h.ID, h.User_IMSI as Content, h.RecordTime, h.DeviceID, d.DeviceName, d.SiteID, s.SiteName, s.Longitude, s.Latitude, m.id as MonitorID, m.name as MonitorName
+    </sql>
+    <sql id="IMEI_Column_List">
+        h.ID, h.User_IMEI as Content, h.RecordTime, h.DeviceID, d.DeviceName, d.SiteID, s.SiteName, s.Longitude, s.Latitude, m.id as MonitorID, m.name as MonitorName
+    </sql>
+    
+    <!-- 轨迹查询 -->
+    <select id="findLineTrack" parameterType="map" resultMap="lineTrackResult">
+        <if test="type !=null">
+            SELECT 
+                <include refid="Base_Column_List" />
+            FROM (
+            <choose>
+                <when test="type == 1">
+                    SELECT 
+                        <include refid="Mac_Column_List" />
+                    FROM visit_log v 
+                        inner join device d on d.ID = v.DeviceID
+                        inner join t_site s on s.ID = d.siteID 
+                        left join monitor m on v.User_Mac=m.MAC
+                    <trim prefix="WHERE" prefixOverrides="AND|OR">
+                        <if test="siteID != null">
+                            AND s.ID in (#{siteID})
+                        </if>
+                        <if test="deviceID != null">
+                            AND d.ID in (#{deviceID})
+                        </if>
+                        <if test="monitorID != null">
+                            AND m.ID in (#{monitorID})
+                        </if>
+                        <if test="content != null">
+                            AND v.User_Mac=#{content}
+                        </if>
+                        <if test="startDate != null">
+                            AND v.StartTime &gt;= #{startDate} 
+                        </if>
+                        <if test="endDate != null">
+                            AND v.StartTime &lt;= #{endDate} 
+                        </if>
+                        <if test="keywords != null">
+                            AND v.User_Mac like "%"#{keywords}"%"
+                          </if>
+                      </trim>
+                </when>
+                <when test="type == 2">
+                     SELECT 
+                        <include refid="IMSI_Column_List" />
+                    FROM hpl_log h 
+                        inner join device d on d.ID = h.DeviceID
+                        inner join t_site s on s.ID = d.siteID 
+                        left join monitor m on h.User_IMSI=m.IMSI
+                    <trim prefix="WHERE" prefixOverrides="AND|OR">
+                        <if test="siteID != null">
+                            AND s.ID in (#{siteID})
+                        </if>
+                        <if test="deviceID != null">
+                            AND d.ID in (#{deviceID})
+                        </if>
+                        <if test="monitorID != null">
+                            AND m.ID in (#{monitorID})
+                        </if>
+                        <if test="content != null">
+                            AND h.User_IMSI=#{content}
+                        </if>
+                        <if test="startDate != null">
+                            AND h.RecordTime &gt;= #{startDate} 
+                        </if>
+                        <if test="endDate != null">
+                            AND h.RecordTime &lt;= #{endDate} 
+                        </if>
+                        <if test="keywords != null">
+                            AND h.User_IMSI like "%"#{keywords}"%"
+                          </if>
+                      </trim>
+                </when>
+                <when test="type == 3">
+                     SELECT 
+                        <include refid="IMEI_Column_List" />
+                    FROM hpl_log h 
+                        inner join device d on d.ID = h.DeviceID
+                        inner join t_site s on s.ID = d.siteID 
+                        left join monitor m on h.User_IMEI=m.IMEI
+                    <trim prefix="WHERE" prefixOverrides="AND|OR">
+                        <if test="siteID != null">
+                            AND s.ID in (#{siteID})
+                        </if>
+                        <if test="deviceID != null">
+                            AND d.ID in (#{deviceID})
+                        </if>
+                        <if test="monitorID != null">
+                            AND m.ID in (#{monitorID})
+                        </if>
+                        <if test="content != null">
+                            AND h.User_IMEI=#{content}
+                        </if>
+                        <if test="startDate != null">
+                            AND h.RecordTime &gt;= #{startDate} 
+                        </if>
+                        <if test="endDate != null">
+                            AND h.RecordTime &lt;= #{endDate} 
+                        </if>
+                        <if test="keywords != null">
+                            AND h.User_IMEI like "%"#{keywords}"%"
+                        </if>
+                    </trim>
+                </when>
+            </choose>
+            ) q
+            <choose>
+                <when test="orderField !=null and orderField !=''">
+                    ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+                </when>
+                <otherwise>
+                    ORDER BY RecordTime desc
+                </otherwise>
+            </choose>
+        </if>
+        
+    </select>
+    
+    <!-- 轨迹查询 -->
+    <select id="findPageBreakByCondition" parameterType="map" resultMap="lineTrackResult">
+        <if test="type != null and (type == 1 or type == 2 or type == 3)">
+            SELECT 
+                <include refid="Base_Column_List" />
+            FROM (
+            <choose>
+                <when test="type == 1">
+                    SELECT 
+                        <include refid="Mac_Column_List" />
+                    FROM visit_log v 
+                        inner join device d on d.ID = v.DeviceID
+                        inner join t_site s on s.ID = d.siteID 
+                        left join monitor m on v.User_Mac=m.MAC
+                    <trim prefix="WHERE" prefixOverrides="AND|OR">
+                        <if test="siteID != null">
+                            AND s.ID in (#{siteID})
+                        </if>
+                        <if test="deviceID != null">
+                            AND d.ID in (#{deviceID})
+                        </if>
+                        <if test="monitorID != null">
+                            AND m.ID in (#{monitorID})
+                        </if>
+                        <if test="content != null">
+                            AND v.User_Mac=#{content}
+                        </if>
+                        <if test="startDate != null">
+                            AND v.StartTime &gt;= #{startDate} 
+                        </if>
+                        <if test="endDate != null">
+                            AND v.StartTime &lt;= #{endDate} 
+                        </if>
+                        <if test="keywords != null">
+                            AND v.User_Mac like "%"#{keywords}"%"
+                        </if>
+                    </trim>
+                </when>
+                <when test="type == 2">
+                     SELECT 
+                        <include refid="IMSI_Column_List" />
+                    FROM hpl_log h 
+                        inner join device d on d.ID = h.DeviceID
+                        inner join t_site s on s.ID = d.siteID 
+                        left join monitor m on h.User_IMSI=m.IMSI
+                    <trim prefix="WHERE" prefixOverrides="AND|OR">
+                        <if test="siteID != null">
+                            AND s.ID in (#{siteID})
+                        </if>
+                        <if test="deviceID != null">
+                            AND d.ID in (#{deviceID})
+                        </if>
+                        <if test="monitorID != null">
+                            AND m.ID in (#{monitorID})
+                        </if>
+                        <if test="content != null">
+                            AND h.User_IMSI=#{content}
+                        </if>
+                        <if test="startDate != null">
+                            AND h.RecordTime &gt;= #{startDate} 
+                        </if>
+                        <if test="endDate != null">
+                            AND h.RecordTime &lt;= #{endDate} 
+                        </if>
+                        <if test="keywords != null">
+                            AND h.User_IMSI like "%"#{keywords}"%"
+                        </if>
+                    </trim>
+                </when>
+                <when test="type == 3">
+                     SELECT 
+                        <include refid="IMEI_Column_List" />
+                    FROM hpl_log h 
+                        inner join device d on d.ID = h.DeviceID
+                        inner join t_site s on s.ID = d.siteID 
+                        left join monitor m on h.User_IMEI=m.IMEI
+                    <trim prefix="WHERE" prefixOverrides="AND|OR">
+                        <if test="siteID != null">
+                            AND s.ID in (#{siteID})
+                        </if>
+                        <if test="deviceID != null">
+                            AND d.ID in (#{deviceID})
+                        </if>
+                        <if test="monitorID != null">
+                            AND m.ID in (#{monitorID})
+                        </if>
+                        <if test="content != null">
+                            AND h.User_IMEI=#{content}
+                        </if>
+                        <if test="startDate != null">
+                            AND h.RecordTime &gt;= #{startDate} 
+                        </if>
+                        <if test="endDate != null">
+                            AND h.RecordTime &lt;= #{endDate} 
+                        </if>
+                        <if test="keywords != null">
+                            AND h.User_IMEI like "%"#{keywords}"%"
+                          </if>
+                      </trim>
+                </when>
+            </choose>
+            ) q
+            <choose>
+                <when test="orderField !=null and orderField !=''">
+                    ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+                </when>
+                <otherwise>
+                    ORDER BY RecordTime desc
+                </otherwise>
+            </choose>
+        </if>
+        
+    </select>
+    
+    <!-- 轨迹查询数量 -->
+    <select id="findNumberByCondition" parameterType="map"  resultType="Integer">
+        
+        <if test="type !=null">
+            <choose>
+                <when test="type !=null and type == 1">
+                    SELECT count(0) as c
+                    FROM visit_log v 
+                        inner join device d on d.ID = v.DeviceID
+                        inner join t_site s on s.ID = d.siteID 
+                        left join monitor m on v.User_Mac=m.MAC
+                    <trim prefix="WHERE" prefixOverrides="AND|OR">
+                        <if test="siteID != null">
+                            AND s.ID in (#{siteID})
+                        </if>
+                        <if test="deviceID != null">
+                            AND d.ID in (#{deviceID})
+                        </if>
+                        <if test="monitorID != null">
+                            AND m.ID in (#{monitorID})
+                        </if>
+                        <if test="content != null">
+                            AND v.User_Mac=#{content}
+                        </if>
+                        <if test="startDate != null">
+                            AND v.StartTime &gt;= #{startDate} 
+                        </if>
+                        <if test="endDate != null">
+                            AND v.StartTime &lt;= #{endDate} 
+                        </if>
+                        <if test="keywords != null">
+                            AND v.User_Mac like "%"#{keywords}"%"
+                        </if>
+                    </trim>
+                </when>
+                <when test="type !=null and type == 2">
+                    SELECT count(0) as c
+                    FROM hpl_log h 
+                        inner join device d on d.ID = h.DeviceID
+                        inner join t_site s on s.ID = d.siteID 
+                        left join monitor m on h.User_IMSI=m.IMSI
+                    <trim prefix="WHERE" prefixOverrides="AND|OR">
+                        <if test="siteID != null">
+                            AND s.ID in (#{siteID})
+                        </if>
+                        <if test="deviceID != null">
+                            AND d.ID in (#{deviceID})
+                        </if>
+                        <if test="monitorID != null">
+                            AND m.ID in (#{monitorID})
+                        </if>
+                        <if test="content != null">
+                            AND h.User_IMSI=#{content}
+                        </if>
+                        <if test="startDate != null">
+                            AND h.RecordTime &gt;= #{startDate} 
+                        </if>
+                        <if test="endDate != null">
+                            AND h.RecordTime &lt;= #{endDate} 
+                        </if>
+                        <if test="keywords != null">
+                            AND h.User_IMSI like "%"#{keywords}"%"
+                        </if>
+                    </trim>
+                </when>
+                <when test="type !=null and type == 3">
+                     SELECT 
+                        count(0) as c
+                    FROM hpl_log h 
+                        inner join device d on d.ID = h.DeviceID
+                        inner join t_site s on s.ID = d.siteID 
+                        left join monitor m on h.User_IMEI=m.IMEI
+                    <trim prefix="WHERE" prefixOverrides="AND|OR">
+                        <if test="siteID != null">
+                            AND s.ID in (#{siteID})
+                        </if>
+                        <if test="deviceID != null">
+                            AND d.ID in (#{deviceID})
+                        </if>
+                        <if test="monitorID != null">
+                            AND m.ID in (#{monitorID})
+                        </if>
+                        <if test="content != null">
+                            AND h.User_IMEI=#{content}
+                        </if>
+                        <if test="startDate != null">
+                            AND h.RecordTime &gt;= #{startDate} 
+                        </if>
+                        <if test="endDate != null">
+                            AND h.RecordTime &lt;= #{endDate} 
+                        </if>
+                        <if test="keywords != null">
+                            AND h.User_IMEI like "%"#{keywords}"%"
+                          </if>
+                      </trim>
+                </when>
+            </choose>
+        </if>
+    </select>
+    
+</mapper>

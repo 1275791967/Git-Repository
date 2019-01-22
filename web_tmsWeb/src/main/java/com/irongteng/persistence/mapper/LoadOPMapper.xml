@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.irongteng.persistence.mapper.LoadOPMapper">
+
+    <resultMap id="loadOPResult" type="LoadOP">
+        <result property="id" jdbcType="INTEGER" column="ID"/>
+        <result property="opNo" jdbcType="INTEGER" column="OpNo"/>
+        <result property="ratio" jdbcType="DOUBLE" column="Ratio"/>
+        <result property="updateTime" jdbcType="TIMESTAMP" column="UpdateTime" />
+        <association property="device" javaType="Device" column="DeviceID" resultMap="deviceResult" />
+    </resultMap>
+    
+    <resultMap id="deviceResult" type="Device">
+        <result property="id" jdbcType="INTEGER" column="DeviceID"/>
+        <result property="customerID" jdbcType="INTEGER" column="CustomerID" />
+        <result property="deviceName" jdbcType="VARCHAR" column="DeviceName" />
+        <result property="deviceIP" jdbcType="VARCHAR" column="DeviceIP" />
+        <result property="deviceType" jdbcType="INTEGER" column="DeviceType" />
+        <result property="featureCode" jdbcType="VARCHAR" column="FeatureCode" />
+        <result property="address" jdbcType="VARCHAR" column="Address" />
+        <result property="areaLocation" jdbcType="VARCHAR" column="AreaLocation" />
+        <result property="longitude" jdbcType="VARCHAR" column="Longitude" />
+        <result property="latitude" jdbcType="VARCHAR" column="Latitude" />
+        <result property="createTime" jdbcType="TIMESTAMP" column="CreateTime" />
+        <result property="remark" jdbcType="VARCHAR" column="Remark" />
+    </resultMap>
+    
+    <sql id="Insert_Column_List">
+        DeviceID,
+        OpNo,
+        Ratio,
+        UpdateTime
+    </sql>
+    <sql id="Base_Column_List">
+        lop.ID,
+        lop.DeviceID,
+        d.CustomerID,
+        d.DeviceName,
+        d.DeviceIP,
+        d.DeviceType,
+        d.FeatureCode,
+        d.Address,
+        d.AreaLocation,
+        d.Longitude,
+        d.Latitude,
+        lop.OpNo,
+        lop.Ratio,
+        lop.UpdateTime
+    </sql>
+    <sql id="Base_Table_List">
+        t_op_load lop inner join t_device d on lop.DeviceID=d.ID
+    </sql>
+    <sql id="Base_Query_List">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM 
+            <include refid="Base_Table_List" />
+    </sql>
+    <!-- 插入 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="LoadOP">
+        INSERT INTO t_op_load (
+            <include refid="Insert_Column_List" />
+        ) VALUES (
+            #{device.Id},
+            #{opNo},
+            #{ratio},
+            #{updateTime}
+        )
+    </insert>
+     <!-- 更新 -->
+    <update id="update" parameterType="LoadOP">
+        UPDATE t_op_load SET
+            deviceID = #{device.Id},
+            opNo = #{opNo},
+            ratio = #{ratio},
+            updateTime = #{updateTime}
+        WHERE 
+            ID = #{id} 
+    </update>
+    <!-- 更新 -->
+    <update id="updateRitio" parameterType="LoadOP">
+        UPDATE t_op_load SET
+            ratio = #{ratio},
+            updateTime = #{updateTime}
+        WHERE 
+            deviceID = #{device.Id} and opNo = #{opNo}
+    </update>
+    
+    <select id="load" parameterType="Integer" resultMap="loadOPResult">    
+        <include refid="Base_Query_List" /> 
+        where lop.ID = #{id} 
+    </select>
+    
+    <select id="getRatio" parameterType="Integer" resultMap="loadOPResult">    
+        <include refid="Base_Query_List" /> 
+        where lop.opNo = #{opNo} order by ratio ASC
+    </select>
+    
+    <select id="getCDMARatio" parameterType="Integer" resultMap="loadOPResult">    
+        select lop.ID,
+        lop.DeviceID,
+        d.CustomerID,
+        d.DeviceName,
+        d.DeviceIP,
+        d.DeviceType,
+        d.FeatureCode,
+        d.Address,
+        d.AreaLocation,
+        d.Longitude,
+        d.Latitude,
+        lop.OpNo,
+        lop.Ratio,
+        lop.UpdateTime,
+        dr.Rand,
+        dr.NormalCh,
+        dr.DCount
+        from t_op_load lop inner join t_device d on lop.DeviceID=d.ID 
+        inner join t_device_rand dr on lop.DeviceID = dr.DeviceID 
+        where lop.opNo = #{opNo} and dr.rand = #{rand} order by lop.ratio ASC
+    </select>
+    
+    <select id="get" parameterType="Integer" resultMap="loadOPResult">    
+        <include refid="Base_Query_List" /> 
+        where lop.opNo = #{opNo} and lop.deviceID = #{deviceID}
+    </select>
+    
+    <select id="queryByDevice" parameterType="Integer" resultMap="loadOPResult">    
+        <include refid="Base_Query_List" /> 
+        where lop.deviceID = #{deviceID}
+    </select>
+    
+    <select id="queryAll" resultMap="loadOPResult">    
+        <include refid="Base_Query_List" /> 
+    </select>
+    
+    <delete id="delete" parameterType="Integer">
+        DELETE FROM t_op_load where ID=#{id}
+    </delete>
+    
+    <delete id="deleteByDeviceID" parameterType="Integer">
+        DELETE FROM t_op_load where deviceID=#{deviceID}
+    </delete>
+    
+    <delete id="clear" parameterType="Integer">
+        DELETE FROM t_op_load
+    </delete>
+    
+    <select id="queryByOp" parameterType="Integer" resultMap="loadOPResult">    
+        <include refid="Base_Query_List" /> 
+        where lop.opNo = #{opNo} order by ratio ASC
+    </select>
+    
+</mapper>

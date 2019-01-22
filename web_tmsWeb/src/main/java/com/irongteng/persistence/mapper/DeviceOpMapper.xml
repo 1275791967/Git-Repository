@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.DeviceOpMapper">
+    
+    <resultMap id="DeviceOPResult" type="DeviceOp">
+       <result property="id" jdbcType="INTEGER" column="ID"/>
+       <result property="op1" jdbcType="INTEGER" column="Op1" />
+       <result property="op2" jdbcType="INTEGER" column="Op2" />
+       <result property="op3" jdbcType="INTEGER" column="Op3" />
+       <result property="op4" jdbcType="INTEGER" column="Op4" />
+       <result property="op5" jdbcType="INTEGER" column="Op5" />
+       <result property="updateTime" jdbcType="TIMESTAMP" column="UpdateTime" />
+       <result property="remark" jdbcType="VARCHAR" column="Remark" />
+       <association property="device" javaType="Device" column="DeviceID" resultMap="deviceResult" />
+    </resultMap>
+    
+    <resultMap id="deviceResult" type="Device">
+        <result property="id" jdbcType="INTEGER" column="DeviceID"/>
+        <result property="customerID" jdbcType="INTEGER" column="CustomerID" />
+        <result property="deviceName" jdbcType="VARCHAR" column="DeviceName" />
+        <result property="deviceIP" jdbcType="VARCHAR" column="DeviceIP" />
+        <result property="deviceType" jdbcType="INTEGER" column="DeviceType" />
+        <result property="featureCode" jdbcType="VARCHAR" column="FeatureCode" />
+        <result property="address" jdbcType="VARCHAR" column="Address" />
+        <result property="areaLocation" jdbcType="VARCHAR" column="AreaLocation" />
+        <result property="longitude" jdbcType="VARCHAR" column="Longitude" />
+        <result property="latitude" jdbcType="VARCHAR" column="Latitude" />
+        <result property="createTime" jdbcType="TIMESTAMP" column="CreateTime" />
+        <result property="remark" jdbcType="VARCHAR" column="Remark" />
+    </resultMap>
+    
+    <sql id="Insert_Column_List">
+        DeviceID,
+        Op1,
+        Op2,
+        Op3,
+        Op4,
+        Op5,
+        UpdateTime,
+        Remark
+    </sql>
+    <sql id="Base_Column_List">
+        dop.ID,
+        dop.DeviceID,
+        d.CustomerID,
+        d.DeviceName,
+        d.DeviceIP,
+        d.DeviceType,
+        d.FeatureCode,
+        d.Address,
+        d.AreaLocation,
+        d.Longitude,
+        d.Latitude,
+        dop.Op1,
+        dop.Op2,
+        dop.Op3,
+        dop.Op4,
+        dop.Op5,
+        dop.UpdateTime,
+        dop.Remark
+    </sql>
+    <sql id="Base_Table_List">
+        t_device_op dop inner join t_device d on dop.DeviceID=d.ID
+    </sql>
+    
+    <!-- 插入 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="DeviceOp">
+        INSERT INTO t_device_op (
+            <include refid="Insert_Column_List" />
+        ) VALUES (
+            #{device.Id},
+            #{op1},
+            #{op2},
+            #{op3},
+            #{op4},
+            #{op5},
+            #{updateTime},
+            #{remark}
+        )
+    </insert>
+     <!-- 更新 -->
+    <update id="update" parameterType="DeviceOp">
+        UPDATE t_device_op SET
+            deviceID = #{device.Id},
+            op1 = #{op1},
+            op2 = #{op2},
+            op3 = #{op3},
+            op4 = #{op4},
+            op5 = #{op5},
+            updateTime = #{updateTime},
+            remark = #{remark}
+        WHERE 
+            ID = #{id} 
+    </update>
+    
+    <sql id="Base_Query_List">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM 
+            <include refid="Base_Table_List" />
+    </sql>
+    <select id="queryAll" resultMap="DeviceOPResult" parameterType="map">
+        <include refid="Base_Query_List" />
+    </select>
+    <select id="queryByOp" resultMap="DeviceOPResult" parameterType="Integer">
+        <include refid="Base_Query_List" />
+         where dop.Op1 = #{op} or dop.Op2 = #{op} or dop.Op3 = #{op} or dop.Op4 = #{op} or dop.Op5 = #{op}
+    </select>
+    <select id="queryByDeviceID" resultMap="DeviceOPResult" parameterType="Integer">
+        <include refid="Base_Query_List" />
+         where dop.DeviceID = #{deviceID} 
+    </select>
+    
+</mapper>

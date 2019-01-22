@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.MonitorMapper">
+
+    <cache />
+    
+    <resultMap id="monitorResult" type="Monitor">
+        <id property="id" jdbcType="INTEGER" column="ID" />
+        <result property="name" jdbcType="VARCHAR" column="Name" />
+        <result property="type" jdbcType="INTEGER" column="Type" />
+        <result property="mac" jdbcType="VARCHAR" column="MAC" />
+        <result property="imei" jdbcType="VARCHAR" column="IMEI" />
+        <result property="imsi" jdbcType="VARCHAR" column="IMSI" />
+        <result property="remark" jdbcType="VARCHAR" column="Remark" />
+    </resultMap>
+    <sql id="Base_Column_List">
+        ID,
+        Name,
+        Type,
+        MAC,
+        IMEI,
+        IMSI,
+        Remark
+    </sql>
+    <sql id="Insert_Column_List">
+        Name,
+        Type,
+        MAC,
+        IMEI,
+        IMSI,
+        Remark
+    </sql>
+    <select id="load" parameterType="Integer" resultMap="monitorResult">
+        SELECT 
+        <include refid="Base_Column_List" />
+        FROM monitor 
+        WHERE 
+        ID = #{id} 
+    </select>
+    <!-- 查询所有的ID -->
+    <select id="findAllIds" resultType="Integer">
+        SELECT ID FROM monitor
+    </select>
+
+    <!-- 按Id删除 -->
+    <delete id="delete" parameterType="Integer">
+        DELETE FROM monitor WHERE
+        ID = #{id} 
+    </delete>
+    <!-- 插入 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO monitor (
+            <include refid="Insert_Column_List" />
+        ) VALUES (
+            #{name},
+            #{type},
+            #{mac},
+            #{imei},
+            #{imsi},
+            #{remark}
+        )
+    </insert>
+    
+    <!-- 批量插入 -->
+    <insert id="addBatch" parameterType="java.util.List">
+        insert into monitor(
+        <include refid="Insert_Column_List" />
+        )
+        values  
+        <foreach item="item" index="index" collection="list" separator=",">
+        (
+            #{item.name},
+            #{item.type},
+            #{item.mac},
+            #{item.imei},
+            #{item.imsi},
+            #{item.remark}
+        )
+        </foreach>  
+    </insert>
+    
+    <select id="countAll" resultType="Integer">
+        SELECT count(ID) FROM monitor    
+    </select>
+    
+    <select id="findAll" resultMap="monitorResult">
+        SELECT 
+        <include refid="Base_Column_List" />
+        FROM monitor
+    </select>
+    
+    <select id="queryAll" resultMap="monitorResult">
+        SELECT ID, Name FROM monitor
+    </select>
+    
+    <!-- 更新 -->
+    <update id="updateSelective" parameterType="Monitor">
+        UPDATE monitor 
+        <set>
+            <if test="name!=null">
+                Name = #{name},
+            </if>
+            <if test="type!=null">
+                Type = #{type},
+            </if>
+            <if test="mac!=null">
+                MAC = #{mac},
+            </if>
+            <if test="imei!=null">
+                IMEI = #{imei},
+            </if>
+            <if test="imsi!=null">
+                IMSI = #{imsi},
+            </if>
+            <if test="remark!=null">
+                Remark = #{remark}
+            </if>
+        </set>
+        WHERE 
+            ID = #{id}
+    </update>
+    
+    <!-- 按条件批量更新 -->
+    <update id="updateBatchSelective" parameterType="java.util.List">
+        <foreach item="item" collection="list" index="index" open="" close="" separator=";">
+            update monitor
+            <set>
+                <if test="item.name!=null">
+                    Name = #{item.name},
+                </if>
+                <if test="item.type!=null">
+                    Type = #{item.type},
+                </if>
+                <if test="item.mac!=null">
+                    MAC = #{item.mac},
+                </if>
+                <if test="item.imei!=null">
+                    IMEI = #{item.imei},
+                </if>
+                <if test="item.imsi!=null">
+                    IMSI = #{item.imsi},
+                </if>
+                <if test="item.remark!=null">
+                    Remark = #{item.remark}
+                </if>
+            </set>
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <choose>
+                    <when test="item.id!=null">
+                        AND ID=#{item.id}
+                    </when>
+                    <otherwise>
+                        <choose>
+                            <when test="item.name!=null">
+                                AND Name=#{item.name}
+                            </when>
+                            <otherwise>
+                                AND ID = 0
+                            </otherwise>
+                        </choose>
+                    </otherwise>
+                </choose>
+            </trim>
+        </foreach>
+    </update>
+    
+    <update id="update" parameterType="Monitor">
+        UPDATE monitor 
+        SET
+            Name = #{name},
+            Type = #{type},
+            MAC = #{mac},
+            IMEI = #{imei},
+            IMSI = #{imsi},
+            Remark = #{remark}
+        WHERE 
+            ID = #{id} 
+    </update>
+    
+    <select id="getByName" parameterType="String" resultMap="monitorResult">
+        select 
+        <include refid="Base_Column_List" />
+        from monitor where Name = #{name}
+    </select>
+    
+    <select id="getByIMSI" parameterType="String" resultMap="monitorResult">
+        select 
+        <include refid="Base_Column_List" />
+        from monitor 
+        where IMSI = #{imsi}
+    </select>
+    
+    <select id="getByIMEI" parameterType="String" resultMap="monitorResult">
+        select 
+        <include refid="Base_Column_List" />
+        from monitor 
+        where IMEI = #{imei}
+    </select>
+    
+    <select id="getByMAC" parameterType="String" resultMap="monitorResult">
+        select 
+        <include refid="Base_Column_List" />
+        from monitor 
+        where MAC = #{mac}
+    </select>
+    
+    <!-- 判断监控对象名称是否唯一 -->
+    <select id="isUniqueName" parameterType="map" resultType="Integer">
+        select count(0) as c from monitor where ID != #{id} and Name = #{name}
+    </select>
+    <!-- 判断监控对象IMSI是否唯一 -->
+    <select id="isUniqueIMSI" parameterType="map" resultType="Integer">
+        select count(0) as c from monitor where ID != #{id} and IMSI = #{imsi}
+    </select>
+    <!-- 判断监控对象IMEI是否唯一 -->
+    <select id="isUniqueIMEI" parameterType="map" resultType="Integer">
+        select count(0) as c from monitor where ID != #{id} and IMEI = #{imei}
+    </select>
+    <!-- 判断监控对象MAC是否唯一 -->
+    <select id="isUniqueMAC" parameterType="map" resultType="Integer">
+        select count(0) as c from monitor where ID != #{id} and MAC = #{mac}
+    </select>
+    
+    <select id="findByCondition" resultMap="monitorResult" parameterType="map">
+        SELECT 
+        <include refid="Base_Column_List" />
+        from monitor 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="type!=null">
+                AND Type = #{type}
+            </if>
+            <choose>
+                <when test="status != null">
+                     AND Status=#{status}  
+                </when>
+                <otherwise>
+                     AND Status!='DELETED'
+                </otherwise>
+            </choose>
+            <if test="keywords != null">
+                AND (
+                Name LIKE "%"#{keywords}"%"
+                or MAC LIKE "%"#{keywords}"%"
+                or IMEI LIKE "%"#{keywords}"%"
+                or IMSI LIKE "%"#{keywords}"%"
+                )
+            </if>
+        </trim>
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                order by ID DESC
+            </otherwise>
+        </choose>
+    </select>
+    
+    <select id="findPageBreakByCondition" resultMap="monitorResult" parameterType="map">
+        SELECT 
+        <include refid="Base_Column_List" />
+        from monitor 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="type!=null">
+                AND Type = #{type}
+            </if>
+            <choose>
+                <when test="status != null">
+                     AND Status=#{status}  
+                </when>
+                <otherwise>
+                     AND Status!='DELETED'
+                </otherwise>
+            </choose>
+            <if test="keywords != null">
+                AND (
+                Name LIKE "%"#{keywords}"%"
+                or MAC LIKE "%"#{keywords}"%"
+                or IMEI LIKE "%"#{keywords}"%"
+                or IMSI LIKE "%"#{keywords}"%"
+                )
+            </if>
+        </trim>
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                order by ID DESC
+            </otherwise>
+        </choose>
+    </select>
+    
+    <select id="findNumberByCondition" resultType="Integer" parameterType="map">
+        select count(0) as c from monitor
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="type!=null">
+                AND Type = #{type}
+            </if>
+            <choose>
+                <when test="status != null">
+                     AND Status=#{status}  
+                </when>
+                <otherwise>
+                     AND Status!='DELETED'
+                </otherwise>
+            </choose>
+            <if test="keywords != null">
+                AND (
+                Name LIKE "%"#{keywords}"%"
+                or MAC LIKE "%"#{keywords}"%"
+                or IMEI LIKE "%"#{keywords}"%"
+                or IMSI LIKE "%"#{keywords}"%"
+                )
+            </if>
+        </trim>
+    </select>
+    
+</mapper>
+

@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.SiteMapper">
+    
+    <cache />
+    
+    <resultMap id="siteResult" type="Site">
+        <result property="id" jdbcType="INTEGER" column="ID"/>
+        <result property="siteName" jdbcType="VARCHAR" column="SiteName" />
+        <result property="longitude" jdbcType="DOUBLE" column="Longitude" />
+        <result property="latitude" jdbcType="DOUBLE" column="Latitude" />
+        <result property="address" jdbcType="VARCHAR" column="Address" />
+        <result property="recordTime" jdbcType="TIMESTAMP" column="RecordTime" />
+        <result property="remark" jdbcType="VARCHAR" column="Remark" />
+    </resultMap>
+    <resultMap id="boundsResult" type="Bounds">
+        <result property="id" jdbcType="INTEGER" column="ID"/>
+        <result property="minLon" jdbcType="DOUBLE" column="minLon" />
+        <result property="maxLon" jdbcType="DOUBLE" column="MaxLon" />
+        <result property="minLat" jdbcType="DOUBLE" column="MinLat" />
+        <result property="maxLat" jdbcType="DOUBLE" column="MaxLat" />
+    </resultMap>
+    <sql id="Base_Column_List">
+        ID,
+        SiteName,
+        Longitude,
+        Latitude,
+        Address,
+        RecordTime,
+        Remark
+    </sql>
+    
+    <!-- 判断站点名称是否存在 -->
+    <select id="isUniqueSitename" parameterType="map" resultType="Integer">
+        select count(0) as c from t_site where ID != #{id} and SiteName = #{siteName}
+    </select>
+    
+    <select id="queryBounds" resultMap="boundsResult">
+        SELECT max(id) as ID, max(longitude) as MaxLon,min(longitude) as MinLon,max(latitude) as MaxLat,min(latitude) as MinLat
+        FROM t_site 
+    </select>
+    
+    <select id="load" parameterType="Integer" resultMap="siteResult">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM t_site 
+        WHERE 
+            ID = #{id} 
+    </select>
+    
+    <select id="get" parameterType="Site" resultMap="siteResult">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM t_site 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="id!=null">
+            and ID = #{id}
+            </if>
+            <if test="siteName!=null">
+            and SiteName = #{siteName}
+            </if>
+          </trim>
+          limit 1
+    </select>
+    
+    <!-- 查询所有的ID -->
+    <select id="findAllIds" resultType="Integer">
+        SELECT ID FROM t_site WHERE status=1
+    </select>
+    
+    <select id="countAll" resultType="Integer">
+        SELECT count(0) FROM t_site
+    </select>
+    
+    <select id="findAll" resultMap="siteResult">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM t_site
+        order by ID
+    </select>
+    
+    <select id="queryAll" resultMap="siteResult">
+        SELECT ID, SiteName, Longitude, Latitude FROM t_site order by ID
+    </select>
+    
+    <!-- 按Id删除 -->
+    <delete id="delete" parameterType="Integer">
+        DELETE FROM t_site WHERE
+        ID = #{id} 
+    </delete>
+    <!-- 插入 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="Site">
+        INSERT INTO t_site (
+            SiteName,
+            Longitude,
+            Latitude,
+            Address,
+            RecordTime, 
+            Remark
+        ) VALUES (
+            #{siteName},
+            #{longitude},
+            #{latitude},
+            #{address},
+            #{recordTime},
+            #{remark}
+        )
+    </insert>
+     <!-- 批量插入 -->
+    <insert id="addBatch" parameterType="java.util.List">
+        INSERT INTO t_site (
+            SiteName,
+            Longitude,
+            Latitude,
+            Address,
+            RecordTime, 
+            Remark
+        ) VALUES 
+        <foreach item="item" index="index" collection="list" separator=",">
+        (
+            #{item.siteName},
+            #{item.longitude},
+            #{item.latitude},
+            #{item.address},
+            #{item.recordTime},
+            #{item.remark}
+        )
+        </foreach>
+    </insert>
+    
+    <update id="update" parameterType="Site">
+        UPDATE t_site SET
+            SiteName = #{siteName},
+            Longitude = #{longitude},
+            Latitude = #{latitude},
+            Address = #{item.address},
+            RecordTime = #{recordTime},
+            Remark = #{remark}
+        WHERE 
+            ID = #{id} 
+    </update>
+    <!-- 更新 -->
+    <update id="updateBatch" parameterType="java.util.List">
+        <foreach item="item" collection="list" index="index" open="" close="" separator=";">
+            UPDATE t_site 
+            SET
+                SiteName = #{item.siteName},
+                Longitude = #{item.longitude},
+                Latitude = #{item.latitude},
+                Address = #{item.address},
+                RecordTime = #{item.recordTime},
+                Remark = #{item.remark}
+	    <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <choose>
+                    <when test="item.id!=null">
+                        AND ID=#{item.id}
+                    </when>
+                    <otherwise>
+                        <choose>
+                            <when test="item.siteNumber!=null">
+                                AND SiteName=#{item.siteName}
+                            </when>
+                            <otherwise>
+                                AND ID = 0
+                            </otherwise>
+                        </choose>
+                    </otherwise>
+                </choose>
+            </trim>
+        </foreach>
+    </update>
+    
+    <!-- 更新 -->
+    <update id="updateSelective" parameterType="Site">
+        UPDATE t_site 
+        <set>
+            <if test="siteName!=null">
+            SiteName = #{siteName},
+            </if>
+            <if test="longitude!=null">
+            Longitude = #{longitude},
+            </if>
+            <if test="latitude!=null">
+            Latitude = #{latitude},
+            </if>
+            <if test="address!=null">
+            Address = #{address},
+            </if>
+            <if test="recordTime!=null">
+            RecordTime = #{recordTime},
+            </if>
+            <if test="remark!=null">
+            Remark = #{remark}
+            </if>
+        </set>
+        WHERE 
+            ID = #{id}
+    </update>
+    
+    <!-- 更新 -->
+    <update id="updateBatchSelective" parameterType="java.util.List">
+        <foreach item="item" collection="list" index="index" open="" close="" separator=";">
+            UPDATE t_site 
+            <set>
+                <if test="item.siteName!=null">
+                SiteName = #{item.siteName},
+                </if>
+                <if test="item.longitude!=null">
+                Longitude = #{item.longitude},
+                </if>
+                <if test="item.latitude!=null">
+                Latitude = #{item.latitude},
+                </if>
+                <if test="item.address!=null">
+                Address = #{item.address},
+                </if>
+                <if test="item.recordTime!=null">
+                RecordTime = #{item.recordTime},
+                </if>
+                <if test="item.remark!=null">
+                Remark = #{item.remark}
+                </if>
+            </set>
+	    <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <choose>
+                    <when test="item.id!=null">
+                        AND ID=#{item.id}
+                    </when>
+                    <otherwise>
+                        <choose>
+                            <when test="item.siteName!=null">
+                                AND SiteName=#{item.siteName}
+                            </when>
+                            <otherwise>
+                                AND ID = 0
+                            </otherwise>
+                        </choose>
+                    </otherwise>
+                </choose>
+            </trim>
+        </foreach>
+    </update>
+    
+    <select id="findPageBreakByCondition" resultMap="siteResult" parameterType="map">
+        SELECT 
+            <include refid="Base_Column_List" />
+        from t_site 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="siteName != null">
+                AND SiteName LIKE "%"#{siteName}"%"
+            </if>
+            <if test="keywords != null">
+                AND (
+                    SiteName LIKE "%"#{keywords}"%"
+                )
+            </if>
+        </trim>
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                 ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                 order by ID DESC
+            </otherwise>
+        </choose>
+    </select>
+    
+    <select id="findNumberByCondition" resultType="Integer" parameterType="map">
+        select count(0) as c from t_site
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="siteName != null">
+                AND SiteName LIKE "%"#{siteName}"%"
+            </if>
+            <if test="keywords != null">
+                AND (
+                    SiteName LIKE "%"#{keywords}"%"
+                )
+            </if>
+        </trim>
+    </select>
+</mapper>

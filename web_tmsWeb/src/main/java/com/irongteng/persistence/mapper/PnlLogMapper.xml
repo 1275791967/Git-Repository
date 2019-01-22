@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.PnlLogMapper">
+    
+    <cache />
+    
+    <resultMap type="PnlLog" id="pnlLogResult">
+        <id property="id" jdbcType="BIGINT" column="PnlLogID" />
+        <result property="deviceMac" jdbcType="VARCHAR" column="Device_Mac" />
+        <result property="userMac" jdbcType="VARCHAR" column="User_Mac" />
+        <result property="apMac" jdbcType="VARCHAR" column="AP_Mac" />
+        <result property="apName" jdbcType="VARCHAR" column="AP_Name" />
+        <result property="frequeny" jdbcType="INTEGER" column="Frequeny" />
+        <result property="recordTime" jdbcType="TIMESTAMP" column="RecordTime" />
+        <association property="device" javaType="Device" column="Device_MAC" resultMap="deviceResult" />
+        <!-- <association property="monitor" javaType="Monitor" column="User_Mac" resultMap="monitorResult" />-->
+    </resultMap>
+    <!--    
+    <resultMap id="monitorResult" type="Monitor">
+        <id property="id" jdbcType="INTEGER" column="MonitorID"/>
+        <result property="name" jdbcType="VARCHAR" column="MonitorName" />
+        <result property="mac" jdbcType="VARCHAR" column="User_MAC" />
+        <result property="imei" jdbcType="VARCHAR" column="IMEI" />
+        <result property="imsi" jdbcType="VARCHAR" column="IMSI" />
+        <result property="remark" jdbcType="VARCHAR" column="Remark" />
+    </resultMap>
+    -->
+    <!-- 设备信息表 -->
+    <resultMap id="deviceResult" type="Device">
+        <id property="id" jdbcType="INTEGER" column="DeviceID" />
+        <result property="deviceName" jdbcType="VARCHAR" column="DeviceName" />
+        <result property="deviceNumber" jdbcType="VARCHAR" column="DeviceNumber" />
+        <result property="attachNumber" jdbcType="VARCHAR" column="AttachNumber" />
+        <result property="commCategory" jdbcType="INTEGER" column="CommCategory" />
+        <result property="ipAddress" jdbcType="VARCHAR" column="IpAddress" />
+        <result property="port" jdbcType="INTEGER" column="Port" />
+        <result property="status" jdbcType="INTEGER" column="Status" />
+        <association property="site" javaType="Site" column="SiteID" resultMap="siteResult" />
+    </resultMap>
+    <resultMap id="siteResult" type="Site">
+        <result property="id" jdbcType="INTEGER" column="SiteID"/>
+        <result property="siteName" jdbcType="VARCHAR" column="SiteName" />
+        <result property="longitude" jdbcType="DOUBLE" column="Longitude" />
+        <result property="latitude" jdbcType="DOUBLE" column="Latitude" />
+        <result property="address" jdbcType="VARCHAR" column="Address" />
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        a.id as PnlLogID, a.Device_MAC,a.User_MAC, a.AP_Name, a.AP_MAC, a.Frequeny, a.RecordTime, d.SiteID, s.SiteName, a.DeviceID, d.DeviceName
+    </sql>
+    
+    <select id="load" parameterType="long" resultMap="pnlLogResult">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM pnl_log a
+            left join device d on d.ID=a.DeviceID 
+            left join t_site s on s.ID=d.siteID 
+        WHERE 
+            a.ID = #{id}
+    </select>
+    
+    <insert id="insert" parameterType="PnlLog" useGeneratedKeys="true" keyProperty="id"> 
+        insert into pnl_log(
+            DeviceID, 
+            Device_Mac,
+            User_Mac,
+            AP_Mac,
+            AP_Name,
+            Frequeny, 
+            RecordTime
+        ) values (
+            #{device.id}, 
+            #{deviceMac}, 
+            #{userMac}, 
+            #{apMac},
+            #{apName},
+            #{frequeny},
+            #{recordTime}
+        )  
+    </insert>
+    
+    <insert id="addBatch" parameterType="java.util.List">
+        insert into pnl_log(
+            DeviceID, 
+            Device_Mac,
+            User_Mac,
+            AP_Mac,
+            AP_Name,
+            Frequeny, 
+            RecordTime
+        ) 
+        values  
+        <foreach item="item" index="index" collection="list" separator=",">
+            (
+            #{item.device.id}, 
+            #{item.deviceMac}, 
+            #{item.userMac}, 
+            #{item.apMac},
+            #{item.apName},
+            #{item.frequeny},
+            #{item.recordTime}
+            )
+        </foreach>
+    </insert>
+    
+    <!-- 查询所有的ID -->
+    <select id="findAllIds" resultType="Long">
+        SELECT ID FROM pnl_log
+    </select>
+    <select id="countAll" resultType="Long">
+        SELECT count(0) FROM pnl_log    
+    </select>
+    
+    <select id="findAll" resultMap="pnlLogResult">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM pnl_log a 
+            left join device d on d.ID=a.DeviceID 
+            left join t_site s on s.ID=d.siteID 
+    </select>
+    
+    <!-- 更新 -->
+    <update id="updateSelective" parameterType="PnlLog">
+        UPDATE pnl_log 
+        <set>
+            <if test="device!=null and device.id!=null">
+            DeviceID=#{device.id},
+            </if>
+            <if test="deviceMac!=null">
+            Device_Mac=#{deviceMac},
+            </if>
+            <if test="userMac!=null">
+            User_Mac=#{userMac},
+            </if>
+            <if test="apMac!=null">
+            AP_Mac=#{apMac},
+            </if>
+            <if test="apName!=null">
+            AP_Name=#{apName},
+            </if>
+            <if test="frequeny!=null">
+            Frequeny=#{frequeny},
+            </if>
+            <if test="recordTime!=null">
+            RecordTime=#{recordTime}
+            </if>                
+        </set>
+        WHERE 
+            ID = #{id}
+    </update>
+    
+    <update id="update" parameterType="PnlLog" >
+        update pnl_log set 
+            DeviceID=#{device.id},
+            Device_Mac=#{deviceMac},
+            User_Mac=#{userMac},
+            AP_Mac=#{apMac},
+            AP_Name=#{apName},
+            Frequeny=#{frequeny},
+            RecordTime=#{recordTime}
+         where ID=#{id}
+    </update>
+    
+    <delete id="delete" parameterType="long">
+        delete from pnl_log where ID=#{id}
+    </delete>
+    
+    <select id="findPageBreakByCondition" parameterType="map" resultMap="pnlLogResult">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM pnl_log a
+            left join device d on d.ID=a.DeviceID 
+            left join t_site s on s.ID=d.siteID 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="status != null">
+                AND d.id=#{status} 
+            </if>
+            <if test="startDate != null">
+                AND a.RecordTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND a.RecordTime &lt;= #{endDate} 
+            </if>
+            <if test="keywords != null">
+                AND (
+                    s.SiteName LIKE "%"#{keywords}"%"
+                    or d.DeviceName LIKE "%"#{keywords}"%"
+                    or a.Device_MAC LIKE "%"#{keywords}"%"
+                    or a.User_MAC LIKE "%"#{keywords}"%"
+                    or a.AP_MAC LIKE "%"#{keywords}"%"
+                    or a.AP_Name LIKE "%"#{keywords}"%"
+                )
+            </if>
+        </trim>
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                 ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                 order by a.ID DESC
+            </otherwise>
+        </choose>
+    </select>
+    
+    <select id="findNumberByCondition" resultType="Integer" parameterType="map">
+        SELECT count(0) as c 
+        FROM pnl_log a
+            left join device d on d.ID=a.DeviceID 
+            left join t_site s on s.ID=d.siteID 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="status != null">
+                AND d.id=#{status} 
+            </if>
+            <if test="startDate != null">
+                AND a.RecordTime &gt;= #{startDate} 
+            </if>
+            <if test="endDate != null">
+                AND a.RecordTime &lt;= #{endDate} 
+            </if>
+            <if test="keywords != null">
+                AND (
+                    s.SiteName LIKE "%"#{keywords}"%"
+                    or d.DeviceName LIKE "%"#{keywords}"%"
+                    or a.Device_MAC LIKE "%"#{keywords}"%"
+                    or a.User_MAC LIKE "%"#{keywords}"%"
+                    or a.AP_MAC LIKE "%"#{keywords}"%"
+                    or a.AP_Name LIKE "%"#{keywords}"%"
+                )
+            </if>
+        </trim>
+    </select>
+</mapper>

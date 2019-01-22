@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.InformMapper">
+
+    <cache />
+    
+    <resultMap id="informResult" type="Inform">
+        <result property="id" jdbcType="INTEGER" column="ID"/>
+        <result property="name" jdbcType="VARCHAR" column="Name" />
+        <result property="phone" jdbcType="VARCHAR" column="Phone" />
+    </resultMap>
+    <sql id="Base_Column_List">
+        ID,
+        Name,
+        Phone
+    </sql>
+    <sql id="INT_UP_Column_List">
+        Name,
+        Phone
+    </sql>
+    <select id="load" parameterType="Integer" resultMap="informResult">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM t_inform_staff 
+        WHERE 
+            ID = #{id} 
+    </select>
+    <!-- 查询所有的ID -->
+    <select id="findAllIds" resultType="Integer">
+        SELECT ID FROM t_inform_staff
+    </select>
+
+    <!-- 按Id删除 -->
+    <delete id="delete" parameterType="Integer">
+        DELETE FROM t_inform_staff WHERE
+        ID = #{id} 
+    </delete>
+    
+    <!-- 插入 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_inform_staff (
+            Name,
+            Phone
+        ) VALUES (
+            #{name},
+            #{phone}
+        )
+    </insert>
+    
+    <!-- 批量插入 -->
+    <insert id="addBatch" parameterType="java.util.List">
+        insert into t_inform_staff(
+            <include refid="INT_UP_Column_List" />
+        )
+        values  
+        <foreach item="item" index="index" collection="list" separator=",">
+            (
+            #{item.name},
+            #{item.phone}
+            )
+        </foreach>  
+    </insert>
+    
+    <select id="countAll" resultType="Integer">
+        SELECT count(ID) FROM t_inform_staff    
+    </select>
+    
+    <select id="findAll" resultMap="informResult">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM t_inform_staff
+    </select>
+    
+    <!-- 更新 -->
+    <update id="updateSelective" parameterType="Inform">
+        UPDATE t_inform_staff 
+        <set>
+            <if test="name!=null">
+            Name = #{name},
+            </if>
+            <if test="phone!=null">
+            Phone = #{phone},
+            </if>
+        </set>
+        WHERE 
+            ID = #{id}
+    </update>
+    
+    <update id="update" parameterType="Inform">
+        UPDATE t_inform_staff 
+        SET
+            Name = #{name},
+            Phone = #{phone}
+        WHERE 
+            ID = #{id} 
+    </update>
+    
+    <!-- 按条件批量更新 -->
+    <update id="updateBatchSelective" parameterType="java.util.List">
+        <foreach item="item" collection="list" index="index" open="" close="" separator=";">
+            update t_inform_staff
+            <set>
+                <if test="item.name!=null">
+                Name=#{item.name},
+                </if>
+                <if test="item.phone!=null">
+                Phone=#{item.phone},
+                </if>
+            </set>
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <choose>
+                    <when test="item.id!=null">
+                        AND ID=#{item.id}
+                    </when>
+                    <otherwise>
+                        <choose>
+                            <when test="item.phone!=null">
+                                AND Phone=#{item.phone}
+                            </when>
+                            <otherwise>
+                                AND ID = 0
+                            </otherwise>
+                        </choose>
+                    </otherwise>
+                </choose>
+            </trim>
+        </foreach>
+    </update>
+    
+    <select id="findByName" parameterType="java.lang.String" resultMap="informResult">
+        select 
+            <include refid="Base_Column_List" />
+        from t_inform_staff where Name = #{name}
+    </select>
+    
+    <select id="isUniqueName" parameterType="map" resultType="Integer">
+        select count(0) as c
+        from t_inform_staff where ID != #{id} and Name = #{name}
+    </select>
+    
+    <select id="isUniquePhone" parameterType="map" resultType="Integer">
+        select count(0) as c
+        from t_inform_staff where ID != #{id} and Phone = #{phone}
+    </select>
+    
+    <select id="findPageBreakByCondition" resultMap="informResult" parameterType="map">
+        SELECT 
+            <include refid="Base_Column_List" />
+        from t_inform_staff 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="keywords != null">
+                AND (
+                    Name LIKE "%"#{keywords}"%"
+                    or Phone LIKE "%"#{keywords}"%"
+                )
+            </if>
+        </trim>
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                 ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                 order by ID DESC
+            </otherwise>
+        </choose>
+           
+    </select>
+    
+    <select id="findNumberByCondition" resultType="Integer" parameterType="map">
+        select count(0) as c from t_inform_staff
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="keywords != null">
+                AND (
+                    Name LIKE "%"#{keywords}"%"
+                    or Phone LIKE "%"#{keywords}"%"
+                )
+              </if>
+          </trim>
+    </select>
+    
+</mapper>
+

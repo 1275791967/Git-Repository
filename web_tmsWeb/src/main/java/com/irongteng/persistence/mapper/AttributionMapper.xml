@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.AttributionMapper">
+    
+    <resultMap id="AttributionResult" type="Attribution">
+        <id property="id" jdbcType="INTEGER" column="Id" />
+        <result property="phoneNO" jdbcType="INTEGER" column="PhoneNO"/>
+        <result property="province" jdbcType="VARCHAR" column="Province"/>
+        <result property="city" jdbcType="VARCHAR" column="City"/>
+        <result property="cellNO" jdbcType="INTEGER" column="CellNO"/>
+        <result property="remark" jdbcType="VARCHAR" column="Remark"/>
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        Id, PhoneNO, Province, City, CellNO, Remark
+    </sql>
+    
+    <sql id="Simple_Column_List">
+        Id, PhoneNO, Province, City
+    </sql>
+    
+    <sql id="Map_Column_List">
+        Id, PhoneNO, Province, City
+    </sql>
+    
+    <select id="load" parameterType="Integer" resultMap="AttributionResult">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM t_attribution 
+        WHERE 
+            Id = #{id} 
+    </select>
+    
+    <select id="findAll" resultMap="AttributionResult">
+        SELECT 
+            <include refid="Map_Column_List" />
+        FROM t_attribution 
+    </select>
+    
+    <!-- 查询所有的短信号码段 -->
+    <select id="queryAllPhoneNO" resultType="Integer">
+        SELECT PhoneNO FROM t_attribution 
+    </select>
+    
+    <!-- 根据设备ID查找参数值与参数相关信息 -->
+    <select id="queryByPhoneNO" parameterType="Integer" resultMap="AttributionResult">
+        select 
+            <include refid="Simple_Column_List" />
+        from t_attribution 
+        where 
+            PhoneNO = #{phoneNO}
+    </select>
+    
+    <!-- 判断参数DeviceID和CategoryParameterID联合主键是否存在 -->
+    <select id="isExistPhoneNO" parameterType="Integer" resultType="Integer">
+        select count(0) as c
+        from t_attribution  
+        where 
+            Id != #{id} and PhoneNO = #{phoneNO} 
+    </select>
+    
+    <!-- 插入 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_attribution  (
+            PhoneNO,
+            Province,
+            city,
+            CellNO,
+            Remark
+        ) VALUES (
+            #{phoneNO},
+            #{province},
+            #{city},
+            #{cellNO},
+            #{remark}
+        )
+    </insert>
+    
+    <!-- 批量插入 -->
+    <insert id="addBatch" parameterType="java.util.List">
+        insert into t_attribution (
+            PhoneNO,
+            Province,
+            City,
+            CellNO,
+            Remark
+        )
+        values  
+        <foreach item="item" index="index" collection="list" separator=",">
+            (
+            #{item.phoneNO},
+            #{item.province},
+            #{item.city},
+            #{item.cellNO},
+            #{item.remark}
+            )
+        </foreach>  
+    </insert>
+    
+    <!-- 更新 -->
+    <update id="update" parameterType="Attribution">
+        UPDATE t_attribution  SET
+            PhoneNO=#{phoneNO},
+            Province=#{province},
+            City=#{city},
+            CellNO=#{cellNO},
+            Remark=#{remark}
+        where 
+            Id = #{id}
+    </update>
+    
+    <!-- 按条件更新 -->
+    <update id="updateSelective" parameterType="Attribution">
+        UPDATE t_attribution 
+        <set>
+            <if test="phoneNO!=null">
+            PhoneNO=#{phoneNO},
+            </if>
+            <if test="province!=null">
+            Province=#{province},
+            </if>
+            <if test="city!=null">
+            City=#{city},
+            </if>
+            <if test="cellNO!=null">
+            CellNO=#{cellNO},
+            </if>
+            <if test="remark!=null">
+            Remark=#{remark}
+            </if>
+        </set>
+        WHERE
+            Id = #{id}
+    </update>
+    
+    <!-- 按条件批量更新 -->
+    <update id="updateBatchSelective" parameterType="java.util.List">
+        <foreach item="item" collection="list" index="index" open="" close="" separator=";">
+            update t_attribution 
+            <set>
+                <if test="item.phoneNO!=null">
+                PhoneNO=#{item.phoneNO},
+                </if>
+                <if test="item.province!=null">
+                Province=#{item.province},
+                </if>
+                <if test="item.city!=null">
+                City=#{item.city},
+                </if>
+                <if test="item.cellNO!=null">
+                CellNO=#{item.cellNO},
+                </if>
+                <if test="item.remark!=null">
+                Remark=#{item.remark}
+                </if>
+            </set>
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <choose>
+                    <when test="item.id!=null">
+                        AND Id=#{item.id}
+                    </when>
+                    <otherwise>
+                        <choose>
+                            <when test="item.phoneNO!=null">
+                                AND PhoneNO=#{item.phoneNO}
+                            </when>
+                            <otherwise>
+                                AND Id = 0
+                            </otherwise>
+                        </choose>
+                    </otherwise>
+                </choose>
+            </trim>
+          </foreach>
+    </update>
+    
+    <!-- 按Id删除 -->
+    <delete id="delete" parameterType="Integer">
+        DELETE FROM t_attribution  where Id=#{id}
+    </delete>
+    
+    <!-- 按设备编号或属性编号可选择删除 -->
+    <delete id="deleteSelective" parameterType="Attribution">
+        DELETE FROM t_attribution  
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <choose>
+                <when test="id!=null">
+                    AND Id=#{id}
+                </when>
+                <otherwise>
+                    <choose>
+                        <when test="phoneNO!=null">
+                            AND PhoneNO=#{phoneNO}
+                        </when>
+                        <otherwise>
+                            AND Id = 0
+                        </otherwise>
+                    </choose>
+                </otherwise>
+            </choose>
+          </trim>
+    </delete>
+    
+    <!-- 按PhoneNO删除 -->
+    <delete id="deleteByPhoneNO" parameterType="Integer">
+        DELETE FROM t_attribution  WHERE PhoneNO = #{phoneNO} 
+    </delete>
+    
+    <!-- 批量删除 -->
+    <delete id="deleteBatch" parameterType="java.util.List">
+        DELETE FROM t_attribution  WHERE
+        Id in
+        <foreach collection="list" item = "item" open="(" separator="," close=")">
+        #{item}  
+        </foreach>
+    </delete>
+    
+    <!-- 批量删除 -->
+    <delete id="deleteBatchByPhoneNO" parameterType="java.util.List">
+        DELETE FROM t_attribution  WHERE
+        PhoneNO in
+        <foreach collection="list" item = "item" open="(" separator="," close=")">
+        #{item}  
+        </foreach>
+    </delete>
+    
+    <!-- 指定页查询 -->
+    <select id="findPageBreakByCondition" resultMap="AttributionResult" parameterType="map">
+        SELECT 
+            <include refid="Base_Column_List" />
+        from t_attribution 
+        
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="status != null">
+                AND Province=#{status} 
+            </if>
+            <if test="type != null">
+                AND City=#{type} 
+            </if>
+            <if test="keywords != null">
+                <choose>
+                    <when test="keywords.length() != 7">
+                         AND (PhoneNO LIKE "%"#{keywords}"%"
+                             OR Province=#{keywords}
+                             OR City LIKE "%"#{keywords}"%"
+                         )
+                    </when>
+                    <otherwise>
+                         AND PhoneNO=#{keywords}
+                    </otherwise>
+                </choose>
+            </if>
+          </trim>
+        
+        <choose>
+            <when test="orderField !=null and orderField !=''">
+                 ORDER BY ${orderField} <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+                 order by PhoneNO
+            </otherwise>
+        </choose>
+           
+    </select>
+    
+    <sql id="Base_Table">
+        t_attribution
+    </sql>
+    
+    <!-- 指定页查询总条数 -->
+    <select id="findNumberByCondition" resultType="Integer" parameterType="map">
+        select count(0) as c 
+        from <include refid="Base_Table" />
+        
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="status != null">
+                AND Province=#{status} 
+            </if>
+            <if test="type != null">
+                AND City=#{type} 
+            </if>
+            <if test="keywords != null">
+                <choose>
+                    <when test="keywords.length() != 7">
+                         AND (PhoneNO LIKE "%"#{keywords}"%"
+                             OR Province=#{keywords}
+                             OR City LIKE "%"#{keywords}"%"
+                         )
+                    </when>
+                    <otherwise>
+                         AND PhoneNO=#{keywords}
+                    </otherwise>
+                </choose>
+            </if>
+          </trim>
+        
+    </select>
+    
+    <!-- 指定页查询总条数 -->
+    <select id="findCondition" resultMap="AttributionResult" parameterType="Attribution">
+        
+        select Id, Province, City,PhoneNO 
+        from t_attribution 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <if test="province != null">
+                AND Province=#{province} 
+            </if>
+            <if test="city != null">
+                AND City=#{city} 
+            </if>
+            <if test="phoneNO != null">
+                AND PhoneNO=#{phoneNO} 
+            </if>
+            <if test="cellNO != null">
+                AND CellNO=#{cellNO} 
+            </if>
+          </trim>
+        
+    </select>
+    
+    <select id="findProvinces" resultType="String">
+        SELECT distinct Province FROM t_attribution  where Province!='AOC' order by Province
+    </select>
+    
+    <select id="queryAreaByCellNo" parameterType="Integer" resultType="String">
+        SELECT distinct Province FROM t_attribution where CellNo = #{cellNo} and Remark != '虚拟运营商';
+    </select>
+    
+    <select id="findCitys" parameterType="Integer" resultType="String">
+        SELECT  distinct City FROM t_attribution  where Province=#{province}
+    </select>
+    
+</mapper>

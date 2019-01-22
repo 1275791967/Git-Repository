@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.irongteng.persistence.mapper.CustomerMapper">
+
+  <select id="load" parameterType="Integer" resultMap="customerResult">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM t_customer 
+        WHERE 
+            ID = #{id} 
+    </select>
+    
+     <select id="findAll" resultMap="customerResult">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM t_customer
+    </select>
+    
+     
+    <select id="countAll" resultType="Integer">
+        SELECT count(0) as c FROM t_customer
+    </select>
+     
+    <select id="queryByPhone" parameterType="String" resultMap="customerResult">
+        select 
+            <include refid="Base_Column_List" />
+        from t_customer
+        where 
+            Contact = #{contact}
+    </select>
+    
+ <!-- 指定页查询总条数 -->
+    <select id="findNumberByCondition" resultType="Integer"
+        parameterType="map">
+        select count(0) as c
+        from t_customer
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+             <if test="keywords != null">
+             AND customerName LIKE "%"#{keywords}"%" or contact  LIKE "%"#{keywords}"%"
+            </if>   
+        </trim>
+    </select>  
+    
+    <!-- 查询 -->
+    <select id="findPageBreakByCondition" resultMap="customerResult"
+        parameterType="map">
+        SELECT
+        <include refid="Base_Column_List" />
+        from t_customer
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+         <if test="keywords != null">
+             AND CustomerName LIKE "%"#{keywords}"%" or contact  LIKE "%"#{keywords}"%"
+            </if>   
+          </trim>
+          <choose>
+            <when test="orderField !=null and orderField !=''">
+                    ORDER BY ${orderField}
+                <if test="orderDirection != null and orderDirection != ''">${orderDirection}</if>
+            </when>
+            <otherwise>
+               order by contact
+            </otherwise>
+        </choose>
+      
+    </select>
+    
+    <!-- 参数带回 -->
+     <select id="parameter"  resultMap="customerResult">
+        select 
+        <include refid="Base_Column_List" /> 
+        from t_customer 
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+        <if test="keywords != null">
+           customerName like CONCAT("%",#{keywords},"%")
+            </if>
+        </trim>   
+    </select> 
+    
+    <!--  <select id="queryByLikeName" parameterType="com.irongteng.persistence.beans.Customer" resultMap="customerResult">
+        select 
+            <include refid="Base_Column_List" />
+        from customer
+        where  1=1
+            <if test="phone!=null">
+            AND phone=#{phone}
+            </if>
+            <if test="id!=null">
+            AND id=#{id}
+            </if>
+            <if test="name!=null">
+            AND name LIKE CONCAT("%", #{name}, "%")
+            </if>
+    </select>-->
+    
+    
+  <select id="queryByName" parameterType="String" resultMap="customerResult">
+        select 
+            <include refid="Base_Column_List" />  
+        from t_customer
+        where 
+         <if test="customerName!=null">
+            CustomerName = #{customerName}
+             </if>
+    </select>
+    
+    <sql id="Map_Column_List">
+        ID, customerName, contact
+    </sql>
+    <sql id="Base_Column_List">
+        ID, customerName, contact, address, createTime, updateTime,remark
+    </sql>
+<sql id="INT_UP_Column_List">
+        customerName, contact, address, createTime, updateTime,remark
+    </sql>
+<insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_customer (
+            <include refid="INT_UP_Column_List" />
+        ) VALUES (
+            #{customerName},                 
+            #{contact},        
+            #{address},
+            #{createTime},
+            #{updateTime},      
+            #{remark}
+        )
+    </insert>
+        <insert id="addBatch" parameterType="java.util.List">
+        insert into t_customer(
+            <include refid="INT_UP_Column_List" />
+        )
+        values  
+        <foreach item="item" index="index" collection="list" separator=",">
+            (         
+            #{item.customerName},
+            #{item.contact},
+            #{item.address},
+            #{item.createTime},
+            #{item.updateTime},
+            #{item.remark}
+            )
+        </foreach>  
+    </insert>
+    
+    <update id="addOrUpdate"  parameterType="Customer"> 
+        INSERT into t_customer(<include refid="INT_UP_Column_List" />)  
+        values( 
+            #{customerName},                 
+            #{contact},        
+            #{address},
+            #{createTime},
+            #{updateTime},       
+            #{remark}
+        )
+        ON DUPLICATE KEY UPDATE ID=#{id}
+    </update>
+    <delete id="delete" parameterType="Integer">
+        DELETE FROM t_customer where ID=#{id}
+    </delete>
+    
+       <!-- 按Phone删除 -->
+    <delete id="deleteByPhone" parameterType="String">
+        DELETE FROM t_customer WHERE Contact=#{contact}
+    </delete>
+    
+  <update id="update" parameterType="Customer">
+        UPDATE t_customer SET            
+            CustomerName=#{customerName},                 
+            Contact=#{contact},        
+            Address=#{address},
+            CreateTime=#{createTime},
+            UpdateTime=#{updateTime},       
+            Remark=#{remark}
+        where 
+            ID = #{id}
+    </update>
+
+    <update id="updateSelective" parameterType="Customer">
+        UPDATE t_customer 
+        <set>
+            <if test="customerName!=null">
+              CustomerName=#{customerName},       
+            </if>
+            <if test="contact!=null">
+             Contact=#{contact},      
+            </if>
+            <if test="address!=null">
+             Address=#{address},
+            </if>
+            <if test="createTime!=null">
+            CreateTime=#{createTime},
+            </if>
+            <if test="updateTime!=null">
+            UpdateTime=#{updateTime},       
+            </if>
+            <if test="remark!=null">
+            Remark=#{remark}
+            </if>
+        </set>
+        WHERE
+            ID = #{id}
+    </update>
+    <update id="updateBatchSelective" parameterType="java.util.List">
+        <foreach item="item" collection="list" index="index" open=""
+            close="" separator=";">
+            
+            update t_customer
+            <set>
+                <if test="item.customerName!=null">
+                    CustomerName=#{item.customerName},
+                </if>
+                <if test="item.contact!=null">
+                    Contact=#{item.contact},
+                </if>
+                <if test="item.address!=null">
+                    Address=#{item.address},
+                </if>
+                <if test="item.createTime!=null">
+                    CreateTime=#{item.createTime},
+                </if>
+                <if test="item.updateTime!=null">
+                    UpdateTime=#{item.updateTime},
+                </if>
+                <if test="item.remark!=null">
+                    Remark=#{item.remark}
+                </if>
+            </set>
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <choose>
+                    <when test="item.id!=null">
+                        AND ID=#{item.id}
+                    </when>
+                    <otherwise>
+                        <choose>
+                            <when test="item.contact!=null">
+                                AND Contact=#{item.contact}
+                            </when>
+                            <otherwise>
+                                AND ID = 0
+                            </otherwise>
+                        </choose>
+                    </otherwise>
+                </choose>
+            </trim>
+        </foreach>
+    </update>
+
+   
+    <!-- 批量删除 -->
+    <delete id="deleteBatchByPhone" parameterType="java.util.List">
+        DELETE FROM t_customer WHERE
+        contact in
+        <foreach collection="list" item = "item" open="(" separator="," close=")">
+      #{item}  
+        </foreach>
+    </delete>
+    <resultMap id="customerResult" type="Customer">
+        <id property="id" jdbcType="INTEGER" column="ID" />
+        <result property="customerName" jdbcType="VARCHAR" column="CustomerName"/>
+        <result property="contact" jdbcType="VARCHAR" column="Contact"/>
+        <result property="address" jdbcType="INTEGER" column="Address"/>
+        <result property="createTime" jdbcType="TIMESTAMP" column="CreateTime"/>  
+        <result property="updateTime" jdbcType="TIMESTAMP" column="UpdateTime"/>
+        <result property="remark" jdbcType="VARCHAR" column="Remark"/>
+    </resultMap>
+
+</mapper>    
